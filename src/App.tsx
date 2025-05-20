@@ -1,17 +1,24 @@
-import { useSelector, useDispatch } from 'react-redux';
-import { increment, decrement } from './store/features/counter/counterSlice';
-import { type RootState, type AppDispatch } from './store';
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Navbar from './components/Navbar/Navbar';
+import Callback from './components/Callback/Callback'; // Make sure this file exists
 
 function App() {
-  const count = useSelector((state: RootState) => state.counter.value);
-  const dispatch = useDispatch<AppDispatch>();
+  useEffect(() => {
+    console.log('App mounts');
+
+    return () => console.log('App unmounts');
+  }, []);
 
   return (
-    <div>
-      <h1>Count: {count}</h1>
-      <button onClick={() => dispatch(decrement())}>-</button>
-      <button onClick={() => dispatch(increment())}>+</button>
-    </div>
+    <Router>
+      <Navbar />
+      <Routes>
+        <Route path="/callback" Component={Callback} />
+        <Route path="/" element={<div>Home Page</div>} />
+        {/* You can add more routes here as needed */}
+      </Routes>
+    </Router>
   );
 }
 
