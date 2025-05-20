@@ -1,46 +1,52 @@
-import type { Dispatch } from 'redux';
-import { setCredentials } from '../store/auth/authSlice';
-import type { UserData } from '../store/auth/authSlice';
+// authActions.ts
+import { createAsyncThunk } from '@reduxjs/toolkit';
 
-export const setUserData = (userData: any) => ({
-  type: "SET_USER_DATA",
-  payload: userData,
-}); //needs to be typed properly. any isn't good practice
+const API_BASE = 'http://localhost:3001/api';
 
-  
-  // Assuming the exchangeCodeForToken function returns the user data
-  export const exchangeCodeForToken = async (code: string,  dispatch: Dispatch) => {
-    const response = await fetch("http://localhost:3001/api/token", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ code }),
+// Exchange code for token
+export const exchangeCodeForToken = createAsyncThunk<
+  { access_token: string; refresh_token?: string; expires_in?: number }, // ✅ Success return type
+  string, // ✅ Argument type
+  { rejectValue: string } // ✅ Reject payload type
+>('auth/exchangeCodeForToken', async (code, thunkAPI) => {
+  try {
+    const response = await fetch(`${API_BASE}/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
     });
-  
+
     if (!response.ok) {
-      throw new Error("Token exchange failed");
+      const errorData = await response.json();
+      return thunkAPI.rejectWithValue(errorData.error || 'Failed to exchange token');
     }
-  
+
     const data = await response.json();
-  const accessToken: string = data.access_token;
-  localStorage.setItem("reddit_access_token", accessToken);
-  
-    // Fetch user data with the token
-    const userResponse = await fetch("https://oauth.reddit.com/api/v1/me", {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
-  
-    if (!userResponse.ok) {
-      throw new Error("Failed to fetch user data");
+    localStorage.setItem('reddit_access_token', data.access_token);
+    localStorage.setItem('reddit_refresh_token', data.refresh_token);
+    return data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+  }
+});
+
+// Fetch Reddit user info
+export const fetchUserInfo = createAsyncThunk<any, string, { rejectValue: string }>(
+  'auth/fetchUserInfo',
+  async (accessToken, thunkAPI) => {
+    try {
+      const response = await fetch('https://oauth.reddit.com/api/v1/me', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return thunkAPI.rejectWithValue(errorData.error || 'Failed to fetch user info');
+      }
+
+      return await response.json();
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
     }
-  
-  const userData: UserData = await userResponse.json();
-
-  dispatch(setCredentials({ accessToken, userData }));
-
-  return { accessToken, userData };
-  };
-  
+  }
+);

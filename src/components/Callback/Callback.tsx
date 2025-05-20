@@ -1,18 +1,18 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { unwrapResult } from '@reduxjs/toolkit';
 import { setCredentials, setError, setLoading } from '../../store/auth/authSlice';
-import { exchangeCodeForToken } from '../../services/auth'; // update import path as needed
+import { exchangeCodeForToken, fetchUserInfo } from '../../actions/authActions';
+import { useAppDispatch } from '../../store/hooks';
 
 const Callback = () => {
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const didRun = useRef(false); // <== key to prevent double execution
 
   useEffect(() => {
     console.log('Mount');
-
     return () => {
       console.log('Unmounts');
     };
@@ -35,8 +35,27 @@ const Callback = () => {
     const handleAuth = async () => {
       try {
         dispatch(setLoading(true));
-        const { accessToken, user } = await exchangeCodeForToken(code);
-        dispatch(setCredentials({ accessToken, userData: user }));
+
+        // Dispatch thunk to exchange code for token and unwrap result
+        const tokenAction = await dispatch(exchangeCodeForToken(code));
+        const tokenResponse = unwrapResult(tokenAction);
+
+        const { access_token, refresh_token, expires_in } = tokenResponse;
+
+        // Dispatch thunk to fetch user info with access token
+        const userAction = await dispatch(fetchUserInfo(access_token));
+        const user = unwrapResult(userAction);
+
+        // Save credentials to Redux store
+        dispatch(
+          setCredentials({
+            accessToken: access_token,
+            refreshToken: refresh_token,
+            expiresIn: expires_in,
+            userData: user,
+          })
+        );
+
         navigate('/');
       } catch (error) {
         console.error('OAuth callback error:', error);

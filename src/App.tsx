@@ -1,25 +1,32 @@
-import React, { useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom'; // remove BrowserRouter import here
 import Navbar from './components/Navbar/Navbar';
-import Callback from './components/Callback/Callback'; // Make sure this file exists
+import Callback from './components/Callback/Callback';
+import PostList from './components/posts/PostList';
+import { useSelector } from 'react-redux';
+import { fetchPosts } from './actions/fetchPosts';
+import type { RootState } from './store/store';
+import { useAppDispatch } from './store/hooks';
 
-function App() {
+const App = () => {
+  const dispatch = useAppDispatch();
+  const accessToken = useSelector((state: RootState) => state.auth.accessToken);
+
   useEffect(() => {
-    console.log('App mounts');
-
-    return () => console.log('App unmounts');
-  }, []);
+    if (accessToken) {
+      dispatch(fetchPosts(accessToken));
+    }
+  }, [accessToken, dispatch]);
 
   return (
-    <Router>
+    <>
       <Navbar />
       <Routes>
         <Route path="/callback" Component={Callback} />
-        <Route path="/" element={<div>Home Page</div>} />
-        {/* You can add more routes here as needed */}
+        <Route path="/" element={<PostList />} />
       </Routes>
-    </Router>
+    </>
   );
-}
+};
 
 export default App;
