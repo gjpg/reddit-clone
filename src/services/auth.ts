@@ -42,32 +42,7 @@ export const startOAuthFlow = () => {
   window.location.href = `https://www.reddit.com/api/v1/authorize?${params.toString()}`;
 };
 
-export const exchangeCodeForToken = async (code: string) => {  console.log("Exchanging code for token, received code:", code);
-
-  const response = await fetch("http://localhost:3001/api/token", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ code }),
-  });
-
-  if (!response.ok) {
-    console.error("Token exchange failed, status:", response.status);
-    throw new Error("Token exchange failed");
-  }
-
-  const data = await response.json();
-  console.log("Token exchange successful, received data:", data);
-
-  // Store the access token and refresh token in localStorage
-  localStorage.setItem('reddit_access_token', data.access_token);
-  localStorage.setItem('reddit_refresh_token', data.refresh_token);
-
-  return data;
-};
-
-export const getUserData = async () => {
+export const fetchUserData = async () => {
   const accessToken = localStorage.getItem('reddit_access_token');
 
   if (!accessToken) {

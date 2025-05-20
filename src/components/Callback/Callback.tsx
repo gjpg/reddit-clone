@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { setCredentials, setError, setLoading } from '../../store/auth/authSlice';
-import { exchangeCodeForToken } from '../../services/auth'; // update import path as needed
+import { exchangeCodeForToken } from '../../actions/authActions';
 
 const Callback = () => {
   const dispatch = useDispatch();
@@ -35,8 +35,9 @@ const Callback = () => {
     const handleAuth = async () => {
       try {
         dispatch(setLoading(true));
-        const { accessToken, user } = await exchangeCodeForToken(code);
-        dispatch(setCredentials({ accessToken, userData: user }));
+        const { accessToken, userData } = await exchangeCodeForToken(code, dispatch);
+        dispatch(setCredentials({ accessToken, userData }));
+        sessionStorage.removeItem('oauth_state');
         navigate('/');
       } catch (error) {
         console.error('OAuth callback error:', error);
