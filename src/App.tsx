@@ -26,7 +26,7 @@ const App = () => {
       <Navbar />
       <Routes>
         <Route path="/callback" Component={Callback} />
-        <Route path="/user" element={<UserPage />} />
+        <Route path="/user/:username" element={<UserPage />} />
         <Route path="/" element={<PostList />} />
       </Routes>
     </>

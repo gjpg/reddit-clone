@@ -51,69 +51,74 @@ const Navbar = () => {
   const username = useTypedSelector((state) => state.auth.userData?.name);
 
   return (
-    <nav className={styles.navbar}>
-      <div className={styles.navContent}>
-        {/* Left - Logo */}
-        <div className={styles.logoContainer}>
-          <Link to="/">
-            <img src={logo} alt="Reddit Logo" className={styles.logo} />
-          </Link>
-        </div>
+  <nav className={styles.navbar}>
+  <div className={styles.navContent}>
+    {/* Left - Logo */}
+    <div className={styles.logoContainer}>
+      <Link to="/">
+        <img src={logo} alt="Reddit Logo" className={styles.logo} />
+      </Link>
+    </div>
 
-        {/* Center - Subreddit */}
-        <div className={styles.subredditContainer}>
-          <h1 className={styles.subredditTitle}>{currentSubreddit || 'Front Page'}</h1>
-        </div>
+    {/* Center - Subreddit */}
+    <div className={styles.subredditContainer}>
+      <h1 className={styles.subredditTitle}>{currentSubreddit || 'Front Page'}</h1>
+    </div>
 
-        {/* Right - Actions */}
-        <div className={styles.actionsContainer}>
-          {/* Search */}
-          <div className={styles.searchWrapper}>
-            {showSearch && (
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={styles.searchInput}
-                placeholder="Search Reddit"
-                autoFocus
-              />
-            )}
-            <button onClick={toggleSearch} className={styles.iconButton}>
-              <img src={searchIcon} alt="Search" className={styles.icon} />
-            </button>
-          </div>
+    {/* Right - Actions */}
+    <div className={styles.actionsContainer}>
+      {/* Search */}
+      <div className={styles.searchWrapper}>
+        {showSearch && (
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={styles.searchInput}
+            placeholder="Search Reddit"
+            autoFocus
+          />
+        )}
+        <button onClick={toggleSearch} className={styles.iconButton}>
+          <img src={searchIcon} alt="Search" className={styles.icon} />
+        </button>
+      </div>
 
-          {/* Auth */}
-          {isAuthenticated ? (
-            <div className={styles.userDropdown} ref={dropdownRef}>
-              <button className={styles.usernameButton} onClick={toggleDropdown}>
-                {username}
-                <img src={dropdownIcon} alt="Menu" className={styles.icon} />
+      {/* Auth */}
+      {isAuthenticated ? (
+        <div className={styles.userDropdown} ref={dropdownRef}>
+          <button className={styles.usernameButton} onClick={toggleDropdown}>
+            {username}
+            <img src={dropdownIcon} alt="Menu" className={styles.icon} />
+          </button>
+          {showDropdown && (
+            <div className={styles.dropdownMenu}>
+              <Link
+                to={`/user/${username}`}
+                className={styles.dropdownItem}
+                onClick={() => setShowDropdown(false)}
+              >
+                Profile
+              </Link>
+              <button
+                onClick={handleLogout}
+                className={`${styles.dropdownItem} ${styles.logoutButton}`}
+                type="button"
+              >
+                Logout
               </button>
-              {showDropdown && (
-                <div className={styles.dropdownMenu}>
-                  <Link to="/user" className={styles.dropdownItem} onClick={() => setShowDropdown(false)}>
-                    Profile
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className={`${styles.dropdownItem} ${styles.logoutButton}`}
-                    type="button"
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
             </div>
-          ) : (
-            <button className={styles.loginButton} onClick={handleLogin}>
-              Login
-            </button>
           )}
         </div>
-      </div>
-    </nav>
+      ) : (
+        <button className={styles.loginButton} onClick={handleLogin}>
+          Login
+        </button>
+      )}
+    </div>
+  </div>
+</nav>
+
   );
 };
 

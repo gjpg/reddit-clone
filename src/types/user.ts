@@ -6,3 +6,22 @@ export interface User {
   error: string | null;
   // add any other user fields you need
 }
+
+export type UserInfo = {
+  username: string;
+  accountAge: number;
+  linkKarma: number;
+  commentKarma: number;
+};
+
+
+export type UserPost = {
+  id: string;
+  title: string;
+  permalink: string;
+};
+
+export type UserComment = {
+  id: string;
+  body: string;
+};

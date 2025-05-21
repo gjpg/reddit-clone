@@ -1,0 +1,78 @@
+/* UserPage.module.css */
+
+.container {
+  max-width: 700px;
+  margin: 2rem auto;
+  padding: 1.5rem;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #333;
+}
+
+.header {
+  border-bottom: 2px solid #ccc;
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.username {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #0079d3; /* Reddit-blue-ish */
+  margin: 0;
+}
+
+.info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.infoItem {
+  flex: 1;
+  text-align: center;
+}
+
+.infoItem strong {
+  display: block;
+  font-size: 1.1rem;
+  margin-bottom: 0.25rem;
+  color: #222;
+}
+
+.section {
+  margin-bottom: 2rem;
+}
+
+.section h2 {
+  font-size: 1.5rem;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.post, .comment {
+  background: #fff;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.1);
+}
+
+.post a {
+  font-weight: 600;
+  color: #0079d3;
+  text-decoration: none;
+}
+
+.post a:hover {
+  text-decoration: underline;
+}
+
+.comment p {
+  margin: 0;
+  line-height: 1.4;
+  color: #555;
+}

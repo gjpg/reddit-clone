@@ -1,5 +1,6 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
+import { Link } from 'react-router-dom';
 import type { RootState } from '../../store/store';
 import styles from './PostList.module.css';
 
@@ -30,7 +31,12 @@ const PostList: React.FC = () => {
               <a href={post.url} target="_blank" rel="noopener noreferrer" className={styles.title}>
                 {post.title}
               </a>
-              <p className={styles.author}>by {post.author}</p>
+              <p className={styles.author}>
+                by{' '}
+                <Link to={`/user/${post.author}`} className={styles.authorLink}>
+                  {post.author}
+                </Link>
+              </p>
             </div>
           </div>
         </div>
