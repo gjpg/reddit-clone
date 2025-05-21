@@ -1,17 +1,20 @@
 import { useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom'; // remove BrowserRouter import here
+import { Routes, Route } from 'react-router-dom';
+
 import Navbar from './components/Navbar/Navbar';
 import Callback from './components/Callback/Callback';
 import PostList from './components/posts/PostList';
-import { useSelector } from 'react-redux';
+import UserPage from './components/UserPage/UserPage';
+
 import { fetchPosts } from './actions/fetchPosts';
-import type { RootState } from './store/store';
-import { useAppDispatch } from './store/hooks';
+import { useAppDispatch, useAppSelector, useAuthInit } from './store/hooks';
 
 const App = () => {
+  useAuthInit();
   const dispatch = useAppDispatch();
-  const accessToken = useSelector((state: RootState) => state.auth.accessToken);
+  const accessToken = useAppSelector((state) => state.auth.accessToken);
 
+  // Fetch posts when accessToken becomes available
   useEffect(() => {
     if (accessToken) {
       dispatch(fetchPosts(accessToken));
@@ -23,6 +26,7 @@ const App = () => {
       <Navbar />
       <Routes>
         <Route path="/callback" Component={Callback} />
+        <Route path="/user" element={<UserPage />} />
         <Route path="/" element={<PostList />} />
       </Routes>
     </>

@@ -1,13 +1,11 @@
-// authActions.ts
 import { createAsyncThunk } from '@reduxjs/toolkit';
 
 const API_BASE = 'http://localhost:3001/api';
 
-// Exchange code for token
 export const exchangeCodeForToken = createAsyncThunk<
-  { access_token: string; refresh_token?: string; expires_in?: number }, // ✅ Success return type
-  string, // ✅ Argument type
-  { rejectValue: string } // ✅ Reject payload type
+  { access_token: string; refresh_token?: string; expires_in?: number },
+  string,
+  { rejectValue: string }
 >('auth/exchangeCodeForToken', async (code, thunkAPI) => {
   try {
     const response = await fetch(`${API_BASE}/token`, {
@@ -27,6 +25,11 @@ export const exchangeCodeForToken = createAsyncThunk<
     localStorage.setItem('reddit_access_token', access_token);
     if (refresh_token) {
       localStorage.setItem('reddit_refresh_token', refresh_token);
+    }
+
+    if (expires_in) {
+      const expiresAt = Date.now() + expires_in * 1000;
+      localStorage.setItem('reddit_expires_at', expiresAt.toString());
     }
 
     return { access_token, refresh_token, expires_in };
@@ -55,3 +58,38 @@ export const fetchUserInfo = createAsyncThunk<any, string, { rejectValue: string
     }
   }
 );
+
+async function refreshAccessToken(refreshToken: string) {
+  const response = await fetch('http://localhost:3001/api/refresh_token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refresh_token: refreshToken })
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to refresh token');
+  }
+
+  return await response.json(); // { access_token, expires_in, ... }
+}
+export const refreshToken = createAsyncThunk<
+  { access_token: string; expires_in?: number; refresh_token?: string }, // success payload
+  string, // refreshToken arg
+  { rejectValue: string }
+>('auth/refreshToken', async (refreshToken, thunkAPI) => {
+  try {
+    const data = await refreshAccessToken(refreshToken);
+
+    localStorage.setItem('reddit_access_token', data.access_token);
+    if (data.refresh_token) {
+      localStorage.setItem('reddit_refresh_token', data.refresh_token);
+    }
+
+    const expiresAt = Date.now() + (data.expires_in ?? 3600) * 1000;
+    localStorage.setItem('reddit_expires_at', expiresAt.toString()); // ✅ Save here too
+
+    return data;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+  }
+});

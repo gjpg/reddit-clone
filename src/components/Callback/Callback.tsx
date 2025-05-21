@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { unwrapResult } from '@reduxjs/toolkit';
-import { setCredentials, setError, setLoading } from '../../store/auth/authSlice';
+import { setTokens, setError, setLoading } from '../../store/auth/authSlice';
 import { exchangeCodeForToken, fetchUserInfo } from '../../actions/authActions';
 import { useAppDispatch } from '../../store/hooks';
 
@@ -47,14 +47,15 @@ const Callback = () => {
         const user = unwrapResult(userAction);
 
         // Save credentials to Redux store
-        dispatch(
-          setCredentials({
-            accessToken: access_token,
-            refreshToken: refresh_token,
-            expiresIn: expires_in,
-            userData: user,
-          })
-        );
+dispatch(
+  setTokens({
+    accessToken: access_token,
+    refreshToken: refresh_token,
+    expiresAt: expires_in ? Date.now() + expires_in * 1000 : null,
+    userData: user,
+  })
+);
+
 
         navigate('/');
       } catch (error) {

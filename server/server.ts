@@ -105,7 +105,7 @@ app.get('/api/posts', async (req: Request, res: Response): Promise<void> => {
       if (!isValid && data.preview?.images?.[0]?.source?.url) {
         thumbnail = data.preview.images[0].source.url.replace(/&amp;/g, '&');
       }
-      console.log('Thumbnail for', data.title, ':', thumbnail);
+      // console.log('Thumbnail for', data.title, ':', thumbnail);
       return {
         id: data.id,
         title: data.title,
@@ -141,16 +141,60 @@ app.get('/api/me', async (req: Request, res: Response): Promise<void> => {
       }
     });
 
-    res.json(redditRes.data);
+    const userData = redditRes.data;
+
+    const accountCreatedDate = new Date(userData.created_utc * 1000);
+    const now = new Date();
+    const accountAgeYears = ((now.getTime() - accountCreatedDate.getTime()) / (1000 * 60 * 60 * 24 * 365)).toFixed(1);
+
+    res.json({
+      username: userData.name,
+      linkKarma: userData.link_karma,
+      commentKarma: userData.comment_karma,
+      accountAge: parseFloat(accountAgeYears)
+    });
   } catch (error) {
     console.error('Failed to fetch user info from Reddit', error);
 
-    if (error.response) {
+    if (axios.isAxiosError(error) && error.response) {
       res.status(error.response.status).json({ error: error.response.data.message || 'Failed to fetch user info' });
       return;
     }
 
     res.status(500).json({ error: 'Failed to fetch user info' });
+  }
+});
+
+app.post('/api/refresh_token', async (req: Request, res: Response): Promise<void> => {
+  const { refresh_token } = req.body;
+  if (!refresh_token) {
+    res.status(400).json({ error: 'Missing refresh token' });
+    return;
+  }
+
+  const clientId = process.env.CLIENT_ID;
+  const clientSecret = process.env.CLIENT_SECRET;
+  const basicAuth = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
+
+  try {
+    const response = await axios.post(
+      'https://www.reddit.com/api/v1/access_token',
+      new URLSearchParams({
+        grant_type: 'refresh_token',
+        refresh_token
+      }),
+      {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Authorization: `Basic ${basicAuth}`
+        }
+      }
+    );
+
+    res.json(response.data);
+  } catch (error) {
+    console.error('Refresh token failed:', error.response?.data || error.message);
+    res.status(500).json({ error: 'Failed to refresh token' });
   }
 });
 

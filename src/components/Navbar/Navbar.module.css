@@ -1,128 +1,172 @@
 .navbar {
-    position: sticky;
-    top: 0;
-    background-color: white;
-    border-bottom: 1px solid #ccc;
-    z-index: 1000;
-    padding: 0.5rem 1rem;
-  }
-  
-  .navContent {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    max-width: 1200px;
-    margin: 0 auto;
-  }
-  
-  .logoContainer {
-    flex: 0 0 auto;
-  }
-  
-  .logo {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-  }
-  
-  .subredditContainer {
-    flex: 1 1 auto;
-    text-align: center;
-    padding: 0 1rem;
-  }
-  
+  position: sticky;
+  top: 0;
+  background-color: white;
+  border-bottom: 1px solid #ccc;
+  z-index: 1000;
+  padding: 0.5rem 1rem;
+}
+
+.navContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.logoContainer {
+  flex: 0 0 auto;
+}
+
+.logo {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.subredditContainer {
+  flex: 1 1 auto;
+  text-align: center;
+  padding: 0 1rem;
+}
+
+.subredditTitle {
+  font-size: 1.2rem;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.actionsContainer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.searchWrapper {
+  display: flex;
+  align-items: center;
+}
+
+.searchInput {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-right: 0.5rem;
+  width: 200px;
+}
+
+.iconButton {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.icon {
+  width: 20px;
+  height: 20px;
+}
+
+.loginButton {
+  background-color: #ff5700;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.loginButton:hover {
+  background-color: #e04b00;
+}
+
+/* Updated userDropdown with dropdownMenu support */
+.userDropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.usernameButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: bold;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  margin-top: 0.5rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  min-width: 150px;
+}
+
+.dropdownItem {
+  display: block;
+  padding: 0.5rem 1rem;
+  text-decoration: none;
+  color: black;
+  cursor: pointer;
+}
+
+.dropdownItem:hover {
+  background-color: #f5f5f5;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
   .subredditTitle {
-    font-size: 1.2rem;
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 1rem;
   }
-  
-  .actionsContainer {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-  
-  .searchWrapper {
-    display: flex;
-    align-items: center;
-  }
-  
+
   .searchInput {
-    padding: 0.5rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    margin-right: 0.5rem;
-    width: 200px;
+    width: 150px;
   }
-  
-  .iconButton {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 0.5rem;
-  }
-  
-  .icon {
-    width: 20px;
-    height: 20px;
-  }
-  
-  .loginButton {
-    background-color: #FF5700;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    padding: 0.5rem 1rem;
-    cursor: pointer;
-    font-weight: bold;
-  }
-  
-  .loginButton:hover {
-    background-color: #e04b00;
-  }
-  
-  .userDropdown {
-    display: flex;
-    align-items: center;
+
+  .actionsContainer {
     gap: 0.5rem;
-    cursor: pointer;
   }
-  
-  .username {
-    font-weight: bold;
+}
+
+@media (max-width: 576px) {
+  .navbar {
+    padding: 0.5rem;
   }
-  
-  /* Media Queries */
-  @media (max-width: 768px) {
-    .subredditTitle {
-      font-size: 1rem;
-    }
-    
-    .searchInput {
-      width: 150px;
-    }
+
+  .subredditTitle {
+    font-size: 0.9rem;
   }
-  
-  @media (max-width: 576px) {
-    .navbar {
-      padding: 0.5rem;
-    }
-    
-    .subredditTitle {
-      font-size: 0.9rem;
-    }
-    
-    .searchInput {
-      width: 120px;
-    }
-    
-    .loginButton {
-      padding: 0.3rem 0.6rem;
-      font-size: 0.8rem;
-    }
+
+  .searchInput {
+    width: 120px;
   }
+
+  .loginButton {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+  }
+}
+
+.logoutButton {
+  color: #d93025; /* Google red */
+  font-weight: bold;
+}
+
+.logoutButton:hover {
+  background-color: #fce8e6;
+}
