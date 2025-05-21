@@ -9,6 +9,7 @@ interface Post {
   author: string;
   url: string;
   subreddit_name_prefixed: string;
+  thumbnail?: string;
 }
 
 interface PostsState {

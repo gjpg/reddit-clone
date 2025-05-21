@@ -21,10 +21,15 @@ export const exchangeCodeForToken = createAsyncThunk<
       return thunkAPI.rejectWithValue(errorData.error || 'Failed to exchange token');
     }
 
-    const data = await response.json();
-    localStorage.setItem('reddit_access_token', data.access_token);
-    localStorage.setItem('reddit_refresh_token', data.refresh_token);
-    return data;
+    const responseData = await response.json();
+    const { access_token, refresh_token, expires_in } = responseData.data;
+
+    localStorage.setItem('reddit_access_token', access_token);
+    if (refresh_token) {
+      localStorage.setItem('reddit_refresh_token', refresh_token);
+    }
+
+    return { access_token, refresh_token, expires_in };
   } catch (error) {
     return thunkAPI.rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
   }
@@ -35,7 +40,7 @@ export const fetchUserInfo = createAsyncThunk<any, string, { rejectValue: string
   'auth/fetchUserInfo',
   async (accessToken, thunkAPI) => {
     try {
-      const response = await fetch('https://oauth.reddit.com/api/v1/me', {
+      const response = await fetch(`${API_BASE}/me`, {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
 
