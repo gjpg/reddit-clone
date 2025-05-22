@@ -25,6 +25,10 @@ const App = () => {
     <>
       <Navbar />
       <Routes>
+        <Route path="/" element={<PostList />} />
+        <Route path="/hot" element={<PostList />} />
+        <Route path="/new" element={<PostList />} />
+        <Route path="/top" element={<PostList />} />
         <Route path="/callback" Component={Callback} />
         <Route path="/user/:username" element={<UserPage />} />
         <Route path="/" element={<PostList />} />

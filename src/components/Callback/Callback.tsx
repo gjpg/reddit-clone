@@ -10,11 +10,16 @@ const Callback = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const didRun = useRef(false); // <== key to prevent double execution
+  console.log('Callback component rendered');
 
   useEffect(() => {
-    console.log('Mount');
+    const timeout = setTimeout(() => {
+      console.log('Callback mounted after delay');
+    }, 1000);
+
     return () => {
-      console.log('Unmounts');
+      console.log('Unmounting Callback.tsx');
+      clearTimeout(timeout);
     };
   }, []);
 
@@ -47,15 +52,14 @@ const Callback = () => {
         const user = unwrapResult(userAction);
 
         // Save credentials to Redux store
-dispatch(
-  setTokens({
-    accessToken: access_token,
-    refreshToken: refresh_token,
-    expiresAt: expires_in ? Date.now() + expires_in * 1000 : null,
-    userData: user,
-  })
-);
-
+        dispatch(
+          setTokens({
+            accessToken: access_token,
+            refreshToken: refresh_token,
+            expiresAt: expires_in ? Date.now() + expires_in * 1000 : null,
+            userData: user
+          })
+        );
 
         navigate('/');
       } catch (error) {

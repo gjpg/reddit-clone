@@ -89,7 +89,7 @@ app.get('/api/posts', async (req: Request, res: Response): Promise<void> => {
   const accessToken = authHeader.split(' ')[1];
 
   try {
-    const redditRes = await axios.get('https://oauth.reddit.com/best', {
+    const redditRes = await axios.get('https://oauth.reddit.com/hot', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'User-Agent': `web:myredditviewer:v1.0.0 (by /u/${process.env.REDDIT_USERNAME})`
@@ -105,14 +105,15 @@ app.get('/api/posts', async (req: Request, res: Response): Promise<void> => {
       if (!isValid && data.preview?.images?.[0]?.source?.url) {
         thumbnail = data.preview.images[0].source.url.replace(/&amp;/g, '&');
       }
-      // console.log('Thumbnail for', data.title, ':', thumbnail);
+
       return {
         id: data.id,
         title: data.title,
         author: data.author,
         url: data.url,
         subreddit_name_prefixed: data.subreddit_name_prefixed,
-        thumbnail
+        thumbnail,
+        created_utc: data.created_utc // ✅ Add this line
       };
     });
 
@@ -157,7 +158,9 @@ app.get('/api/me', async (req: Request, res: Response): Promise<void> => {
     console.error('Failed to fetch user info from Reddit', error);
 
     if (axios.isAxiosError(error) && error.response) {
-      res.status(error.response.status).json({ error: error.response.data.message || 'Failed to fetch user info' });
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || 'Failed to fetch user info';
+      res.status(error.response.status).json({ error: errorMessage });
+
       return;
     }
 
@@ -169,6 +172,10 @@ app.post('/api/refresh_token', async (req: Request, res: Response): Promise<void
   const { refresh_token } = req.body;
   if (!refresh_token) {
     res.status(400).json({ error: 'Missing refresh token' });
+    return;
+  }
+  if (!refresh_token || typeof refresh_token !== 'string') {
+    res.status(400).json({ error: 'Missing or invalid refresh token' });
     return;
   }
 

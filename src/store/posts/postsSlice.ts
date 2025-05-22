@@ -1,50 +1,105 @@
-// src/store/posts/postsSlice.ts
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
-
-interface Post {
-  id: string;
-  title: string;
-  author: string;
-  url: string;
-  subreddit_name_prefixed: string;
-  thumbnail?: string;
-}
+import type { Post } from '../../types/post';
+import type { RedditItem } from '../../types/reddit';
 
 interface PostsState {
   posts: Post[];
+  userActivity: RedditItem[];  // posts + comments on user profile
   loading: boolean;
+  userActivityLoading: boolean;
   error: string | null;
+  userActivityError: string | null;
 }
 
 const initialState: PostsState = {
   posts: [],
+  userActivity: [],
   loading: false,
+  userActivityLoading: false,
   error: null,
+  userActivityError: null
 };
 
-export const fetchPosts = createAsyncThunk<
-  Post[],
-  string,
-  { rejectValue: string }
->('posts/fetchPosts', async (token, thunkAPI) => {
-  try {
-    const res = await fetch('http://localhost:3001/api/posts', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+// Frontpage posts thunk
+export const fetchPosts = createAsyncThunk<Post[], string, { rejectValue: string }>(
+  'posts/fetchPosts',
+  async (token, thunkAPI) => {
+    try {
+      const res = await fetch('http://localhost:3001/api/posts', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
 
-    if (!res.ok) {
-      const errorData = await res.json();
-      return thunkAPI.rejectWithValue(errorData.error || 'Failed to fetch posts');
+      if (!res.ok) {
+        const errorData = await res.json();
+        return thunkAPI.rejectWithValue(errorData.error || 'Failed to fetch posts');
+      }
+
+      const data = await res.json();
+      return data.posts; // assuming backend returns { posts: Post[] }
+    } catch {
+      return thunkAPI.rejectWithValue('Network error');
     }
+  }
+);
 
-    const data = await res.json();
-    return data.posts;  // assuming backend returns { posts: Post[] }
+// User activity thunk (combine user posts and comments separately in your UI by filtering on kind)
+export const fetchUserActivity = createAsyncThunk<
+  RedditItem[],
+  { token: string; username: string },
+  { rejectValue: string }
+>('posts/fetchUserActivity', async ({ token, username }, thunkAPI) => {
+  try {
+    // Fetch user posts
+    const postsRes = await fetch(`https://oauth.reddit.com/user/${username}/submitted`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!postsRes.ok) {
+      const error = await postsRes.json();
+      return thunkAPI.rejectWithValue(error.message || 'Failed to fetch user posts');
+    }
+    const postsData = await postsRes.json();
+
+    // Fetch user comments
+    const commentsRes = await fetch(`https://oauth.reddit.com/user/${username}/comments`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!commentsRes.ok) {
+      const error = await commentsRes.json();
+      return thunkAPI.rejectWithValue(error.message || 'Failed to fetch user comments');
+    }
+    const commentsData = await commentsRes.json();
+
+    // Map posts
+    const mappedPosts: RedditItem[] = postsData.data.children.map((post: any) => ({
+      id: post.data.id,
+      author: post.data.author,
+      created_utc: post.data.created_utc,
+      permalink: post.data.permalink,
+      kind: 'post',
+      title: post.data.title,
+      url: post.data.url,
+      subreddit_name_prefixed: post.data.subreddit_name_prefixed,
+      thumbnail: post.data.thumbnail
+    }));
+
+    // Map comments
+    const mappedComments: RedditItem[] = commentsData.data.children.map((comment: any) => ({
+      id: comment.data.id,
+      author: comment.data.author,
+      created_utc: comment.data.created_utc,
+      permalink: comment.data.permalink,
+      kind: 'comment',
+      body: comment.data.body
+    }));
+
+    // Combine and return
+    return [...mappedPosts, ...mappedComments];
   } catch {
-    return thunkAPI.rejectWithValue('Network error');
+    return thunkAPI.rejectWithValue('Failed to fetch user activity');
   }
 });
 
@@ -57,9 +112,15 @@ const postsSlice = createSlice({
       state.error = null;
       state.loading = false;
     },
+    clearUserActivity(state) {
+      state.userActivity = [];
+      state.userActivityError = null;
+      state.userActivityLoading = false;
+    }
   },
   extraReducers: (builder) => {
     builder
+      // frontpage posts handlers
       .addCase(fetchPosts.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -71,14 +132,32 @@ const postsSlice = createSlice({
       .addCase(fetchPosts.rejected, (state, action) => {
         state.error = action.payload || 'Failed to fetch posts';
         state.loading = false;
+      })
+
+      // user activity handlers
+      .addCase(fetchUserActivity.pending, (state) => {
+        state.userActivityLoading = true;
+        state.userActivityError = null;
+      })
+      .addCase(fetchUserActivity.fulfilled, (state, action: PayloadAction<RedditItem[]>) => {
+        state.userActivity = action.payload;
+        state.userActivityLoading = false;
+      })
+      .addCase(fetchUserActivity.rejected, (state, action) => {
+        state.userActivityError = action.payload || 'Failed to fetch user activity';
+        state.userActivityLoading = false;
       });
-  },
+  }
 });
 
-export const { clearPosts } = postsSlice.actions;
+export const { clearPosts, clearUserActivity } = postsSlice.actions;
 
 export const selectPosts = (state: RootState) => state.posts.posts;
 export const selectPostsLoading = (state: RootState) => state.posts.loading;
 export const selectPostsError = (state: RootState) => state.posts.error;
+
+export const selectUserActivity = (state: RootState) => state.posts.userActivity;
+export const selectUserActivityLoading = (state: RootState) => state.posts.userActivityLoading;
+export const selectUserActivityError = (state: RootState) => state.posts.userActivityError;
 
 export default postsSlice.reducer;

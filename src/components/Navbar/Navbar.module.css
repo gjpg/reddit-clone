@@ -86,7 +86,6 @@
   background-color: #e04b00;
 }
 
-/* Updated userDropdown with dropdownMenu support */
 .userDropdown {
   position: relative;
   display: flex;
@@ -128,6 +127,15 @@
   background-color: #f5f5f5;
 }
 
+.logoutButton {
+  color: #d93025;
+  font-weight: bold;
+}
+
+.logoutButton:hover {
+  background-color: #fce8e6;
+}
+
 /* Media Queries */
 @media (max-width: 768px) {
   .subredditTitle {
@@ -160,13 +168,4 @@
     padding: 0.3rem 0.6rem;
     font-size: 0.8rem;
   }
-}
-
-.logoutButton {
-  color: #d93025; /* Google red */
-  font-weight: bold;
-}
-
-.logoutButton:hover {
-  background-color: #fce8e6;
 }

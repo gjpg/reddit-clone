@@ -1,9 +1,10 @@
 // LoginButton.tsx
 import { useEffect, useRef } from 'react';
 import { useAppDispatch } from '../hooks';
-import { setCredentials, setLoading, setError } from './authSlice';
+import { setLoading, setError } from './authSlice';
 import { startOAuthFlow } from '../../services/auth';
 import { exchangeCodeForToken, fetchUserInfo } from '../../actions/authActions';
+import { setTokens } from './authSlice';
 
 const LoginButton = () => {
   const dispatch = useAppDispatch(); // ✅ typed dispatch
@@ -35,7 +36,8 @@ const LoginButton = () => {
           const tokenResponse = await dispatch(exchangeCodeForToken(code)).unwrap();
           const userInfo = await dispatch(fetchUserInfo(tokenResponse.access_token)).unwrap();
 
-          dispatch(setCredentials({ accessToken: tokenResponse.access_token, userData: userInfo }));
+          console.log('Fetched userInfo:', userInfo);
+          dispatch(setTokens({ accessToken: tokenResponse.access_token, userData: userInfo }));
 
           window.history.replaceState({}, '', '/');
         } catch (error) {

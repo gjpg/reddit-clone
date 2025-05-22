@@ -24,4 +24,5 @@ export type UserPost = {
 export type UserComment = {
   id: string;
   body: string;
+  created_utc: number;
 };

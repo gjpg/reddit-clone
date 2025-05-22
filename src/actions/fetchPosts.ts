@@ -1,10 +1,17 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
+import type { Post } from '../types';
 
-export const fetchPosts = createAsyncThunk('posts/fetchPosts', async (accessToken: string, thunkAPI) => {
+export const fetchPosts = createAsyncThunk<Post[], string>('posts/fetchPosts', async (sort = 'hot', thunkAPI) => {
   try {
-    const response = await fetch('http://localhost:3001/api/posts', {
+    const token = localStorage.getItem('reddit_access_token');
+    if (!token) {
+      return thunkAPI.rejectWithValue({ error: 'Missing access token' });
+    }
+
+    const url = `http://localhost:3001/api/posts${sort && sort !== 'hot' ? `?sort=${sort}` : ''}`;
+    const response = await fetch(url, {
       headers: {
-        Authorization: `Bearer ${accessToken}`
+        Authorization: `Bearer ${token}`
       }
     });
 
@@ -12,13 +19,11 @@ export const fetchPosts = createAsyncThunk('posts/fetchPosts', async (accessToke
       const errorData = await response.json();
       return thunkAPI.rejectWithValue(errorData);
     }
+
     const data = await response.json();
-    return data.posts; // ✅ Return just the array of posts
+    return data.posts as Post[];
   } catch (error) {
-    let errorMessage = 'Unknown error occurred';
-    if (error instanceof Error) {
-      errorMessage = error.message;
-    }
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return thunkAPI.rejectWithValue({ error: errorMessage });
   }
 });
