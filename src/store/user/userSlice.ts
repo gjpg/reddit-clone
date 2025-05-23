@@ -1,24 +1,21 @@
 import { createSlice } from '@reduxjs/toolkit';
 import { fetchUserInfo, fetchUserActivity } from '../../actions/userActions';
-import type { UserInfo } from '../../types';
-import type { RedditItem } from '../../types/reddit';
+import type { RedditAPIUser, Post, UserComment } from '../../types';
 
 interface UserState {
-  info: UserInfo | null;
-  userActivity: RedditItem[];
-  loadingInfo: boolean;
-  loadingActivity: boolean;
-  errorInfo: string | null;
-  errorActivity: string | null;
+  info: RedditAPIUser | null;
+  posts: Post[];
+  comments: UserComment[];
+  loading: boolean;
+  error: string | null;
 }
 
 const initialState: UserState = {
   info: null,
-  userActivity: [],
-  loadingInfo: false,
-  loadingActivity: false,
-  errorInfo: null,
-  errorActivity: null
+  posts: [],
+  comments: [],
+  loading: false,
+  error: null
 };
 
 const userSlice = createSlice({
@@ -27,41 +24,40 @@ const userSlice = createSlice({
   reducers: {
     clearUserData(state) {
       state.info = null;
-      state.userActivity = [];
-      state.errorInfo = null;
-      state.errorActivity = null;
-      state.loadingInfo = false;
-      state.loadingActivity = false;
+      state.posts = [];
+      state.comments = [];
+      state.error = null;
     }
   },
   extraReducers: (builder) => {
     builder
-      // Fetch user info
+      // Fetch User Info
       .addCase(fetchUserInfo.pending, (state) => {
-        state.loadingInfo = true;
-        state.errorInfo = null;
+        state.loading = true;
+        state.error = null;
       })
       .addCase(fetchUserInfo.fulfilled, (state, action) => {
         state.info = action.payload;
-        state.loadingInfo = false;
+        state.loading = false;
       })
       .addCase(fetchUserInfo.rejected, (state, action) => {
-        state.errorInfo = typeof action.payload === 'string' ? action.payload : 'Failed to fetch user info';
-        state.loadingInfo = false;
+        state.error = typeof action.payload === 'string' ? action.payload : 'Failed to fetch user info';
+        state.loading = false;
       })
 
-      // Fetch combined user activity (posts + comments)
+      // Fetch User Activity (posts + comments)
       .addCase(fetchUserActivity.pending, (state) => {
-        state.loadingActivity = true;
-        state.errorActivity = null;
+        state.loading = true;
+        state.error = null;
       })
       .addCase(fetchUserActivity.fulfilled, (state, action) => {
-        state.userActivity = action.payload;
-        state.loadingActivity = false;
+        state.posts = action.payload.posts;
+        state.comments = action.payload.comments;
+        state.loading = false;
       })
       .addCase(fetchUserActivity.rejected, (state, action) => {
-        state.errorActivity = typeof action.payload === 'string' ? action.payload : 'Failed to fetch user activity';
-        state.loadingActivity = false;
+        state.error = typeof action.payload === 'string' ? action.payload : 'Failed to fetch user activity';
+        state.loading = false;
       });
   }
 });

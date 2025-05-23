@@ -6,9 +6,11 @@
     "express": "^5.1.0"
   },
   "scripts": {
-    "start": "node server.ts"
+    "start": "ts-node server.ts"
   },
   "devDependencies": {
-    "@types/node": "^22.15.19"
+    "@types/node": "^22.15.19",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
   }
 }

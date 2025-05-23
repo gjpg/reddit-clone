@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import type { TypedUseSelectorHook } from 'react-redux';
 import { useSelector, useDispatch } from 'react-redux';
-import { useLocation, NavLink, Link } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import type { RootState } from '../../store/store';
 import styles from './Navbar.module.css';
 import logo from '../../assets/logo.svg';
@@ -12,8 +12,6 @@ import { logout } from '../../store/auth/authSlice';
 import SortButtons from '../SortButtons/SortButtons';
 
 const useTypedSelector: TypedUseSelectorHook<RootState> = useSelector;
-
-const sortOptions = ['best', 'hot', 'new', 'top'] as const;
 
 const Navbar = () => {
   const [showSearch, setShowSearch] = useState(false);

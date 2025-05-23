@@ -1,4 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
+import type { User,  RedditAPIUser} from '../types';
+import type { RootState } from '../store/store';
+import { mapRedditUserToAppUser } from '../utils/mappers';
 
 const API_BASE = 'http://localhost:3001/api';
 
@@ -39,22 +42,26 @@ export const exchangeCodeForToken = createAsyncThunk<
 });
 
 // Fetch Reddit user info
-export const fetchUserInfo = createAsyncThunk<any, string, { rejectValue: string }>(
+export const fetchUserInfo = createAsyncThunk<User, void, { state: RootState }>(
   'auth/fetchUserInfo',
-  async (accessToken, thunkAPI) => {
+  async (_, thunkAPI) => {
     try {
-      const response = await fetch(`${API_BASE}/me`, {
-        headers: { Authorization: `Bearer ${accessToken}` }
+      const state = thunkAPI.getState();
+      const accessToken = state.auth.accessToken;
+
+      const response = await fetch('https://oauth.reddit.com/api/v1/me', {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        return thunkAPI.rejectWithValue(errorData.error || 'Failed to fetch user info');
-      }
+      const redditUser: RedditAPIUser = await response.json();
 
-      return await response.json();
-    } catch (error) {
-      return thunkAPI.rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+      const user: User = mapRedditUserToAppUser(redditUser); // ⬅️ Use it here
+
+      return user;
+    } catch (err) {
+      return thunkAPI.rejectWithValue('Failed to fetch user info');
     }
   }
 );

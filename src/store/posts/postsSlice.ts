@@ -2,11 +2,12 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import type { Post } from '../../types/post';
-import type { RedditItem } from '../../types/reddit';
+import type { RedditPost, RedditComment } from '../../types/reddit';
 
 interface PostsState {
   posts: Post[];
-  userActivity: RedditItem[];  // posts + comments on user profile
+  userPosts: RedditPost[];      // user submitted posts
+  userComments: RedditComment[]; // user comments
   loading: boolean;
   userActivityLoading: boolean;
   error: string | null;
@@ -15,7 +16,8 @@ interface PostsState {
 
 const initialState: PostsState = {
   posts: [],
-  userActivity: [],
+  userPosts: [],
+  userComments: [],
   loading: false,
   userActivityLoading: false,
   error: null,
@@ -46,9 +48,9 @@ export const fetchPosts = createAsyncThunk<Post[], string, { rejectValue: string
   }
 );
 
-// User activity thunk (combine user posts and comments separately in your UI by filtering on kind)
+// User activity thunk (fetch posts and comments separately)
 export const fetchUserActivity = createAsyncThunk<
-  RedditItem[],
+  { posts: RedditPost[]; comments: RedditComment[] },
   { token: string; username: string },
   { rejectValue: string }
 >('posts/fetchUserActivity', async ({ token, username }, thunkAPI) => {
@@ -74,7 +76,7 @@ export const fetchUserActivity = createAsyncThunk<
     const commentsData = await commentsRes.json();
 
     // Map posts
-    const mappedPosts: RedditItem[] = postsData.data.children.map((post: any) => ({
+    const mappedPosts: RedditPost[] = postsData.data.children.map((post: any) => ({
       id: post.data.id,
       author: post.data.author,
       created_utc: post.data.created_utc,
@@ -83,21 +85,23 @@ export const fetchUserActivity = createAsyncThunk<
       title: post.data.title,
       url: post.data.url,
       subreddit_name_prefixed: post.data.subreddit_name_prefixed,
-      thumbnail: post.data.thumbnail
+      thumbnail: post.data.thumbnail,
+      score: post.data.score ?? 0
     }));
 
     // Map comments
-    const mappedComments: RedditItem[] = commentsData.data.children.map((comment: any) => ({
+    const mappedComments: RedditComment[] = commentsData.data.children.map((comment: any) => ({
       id: comment.data.id,
       author: comment.data.author,
       created_utc: comment.data.created_utc,
       permalink: comment.data.permalink,
       kind: 'comment',
-      body: comment.data.body
+      body: comment.data.body,
+      subreddit_name_prefixed: comment.data.subreddit_name_prefixed,
+      score: comment.data.score ?? 0
     }));
 
-    // Combine and return
-    return [...mappedPosts, ...mappedComments];
+    return { posts: mappedPosts, comments: mappedComments };
   } catch {
     return thunkAPI.rejectWithValue('Failed to fetch user activity');
   }
@@ -113,7 +117,8 @@ const postsSlice = createSlice({
       state.loading = false;
     },
     clearUserActivity(state) {
-      state.userActivity = [];
+      state.userPosts = [];
+      state.userComments = [];
       state.userActivityError = null;
       state.userActivityLoading = false;
     }
@@ -139,8 +144,9 @@ const postsSlice = createSlice({
         state.userActivityLoading = true;
         state.userActivityError = null;
       })
-      .addCase(fetchUserActivity.fulfilled, (state, action: PayloadAction<RedditItem[]>) => {
-        state.userActivity = action.payload;
+      .addCase(fetchUserActivity.fulfilled, (state, action: PayloadAction<{ posts: RedditPost[]; comments: RedditComment[] }>) => {
+        state.userPosts = action.payload.posts;
+        state.userComments = action.payload.comments;
         state.userActivityLoading = false;
       })
       .addCase(fetchUserActivity.rejected, (state, action) => {
@@ -156,7 +162,8 @@ export const selectPosts = (state: RootState) => state.posts.posts;
 export const selectPostsLoading = (state: RootState) => state.posts.loading;
 export const selectPostsError = (state: RootState) => state.posts.error;
 
-export const selectUserActivity = (state: RootState) => state.posts.userActivity;
+export const selectUserPosts = (state: RootState) => state.posts.userPosts;
+export const selectUserComments = (state: RootState) => state.posts.userComments;
 export const selectUserActivityLoading = (state: RootState) => state.posts.userActivityLoading;
 export const selectUserActivityError = (state: RootState) => state.posts.userActivityError;
 

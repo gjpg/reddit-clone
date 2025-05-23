@@ -5,7 +5,7 @@ import { fetchUserInfo, fetchUserActivity } from '../../actions/userActions';
 import type { RootState } from '../../store/store';
 import styles from './UserPage.module.css';
 import { formatPostAge } from '../../utils/time';
-import type { RedditItem, RedditPost, RedditComment } from '../../types';
+import type { RedditPost, RedditComment } from '../../types'; // No RedditItem import now
 import SortButtons from '../SortButtons/SortButtons';
 import { sortContent } from '../../utils/sortContent';
 
@@ -14,107 +14,118 @@ const UserPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const token = localStorage.getItem('reddit_access_token');
 
-
-
-  const {
-    info,
-    userActivity,
-    loadingInfo,
-    loadingActivity,
-    errorInfo,
-    errorActivity,
-  } = useSelector((state: RootState) => state.user);
+  // Explicitly type posts and comments from state as RedditPost[] and RedditComment[]
+  const { info, posts, comments, loading, error } = useSelector((state: RootState) => ({
+    info: state.user.info,
+    posts: state.user.posts as RedditPost[],
+    comments: state.user.comments as RedditComment[],
+    loading: state.user.loading,
+    error: state.user.error
+  }));
 
   const [params] = useSearchParams();
-const sort = (params.get('sort') as 'new' | 'top' | 'hot') ?? 'new'; // user page default is 'new'
-const timespan = (params.get('t') as 'day' | 'month' | 'year' | 'all') ?? 'all';  const basePath = `/user/${username}`;
-const sortedItems = sortContent({
-  items: userActivity,
-  sort,
-  timespan,
-  page: 'user'
-});
+  const sort = (params.get('sort') as 'new' | 'top' | 'hot') ?? 'new';
+  const timespan = (params.get('t') as 'day' | 'month' | 'year' | 'all') ?? 'all';
+  const basePath = `/user/${username}`;
+
+  // Add kind discriminator explicitly (optional if you always set kind on data source)
+  const postsWithKind: RedditPost[] = posts.map((post) => ({
+    ...post,
+    kind: 'post',
+    score: post.score ?? 'hidden'
+  }));
+
+  const commentsWithKind: RedditComment[] = comments.map((comment) => ({
+    ...comment,
+    kind: 'comment',
+    score: comment.score ?? 'hidden'
+  }));
+
+  // If your sortContent accepts only one array, merge but declare type carefully:
+  // Or better: adjust sortContent to accept posts and comments separately, if possible
+  const userActivity: (RedditPost | RedditComment)[] = [...postsWithKind, ...commentsWithKind];
+
+  const sortedItems = sortContent({
+    items: userActivity,
+    sort,
+    timespan,
+    page: 'user'
+  });
 
   useEffect(() => {
     if (token && username) {
       dispatch(fetchUserInfo({ token, username }) as any);
-      dispatch(fetchUserActivity({ token, username, sort }) as any); // Pass sort to thunk
+      dispatch(fetchUserActivity({ token, username, sort }) as any);
     }
   }, [token, username, sort, dispatch]);
 
-  if (loadingInfo || loadingActivity) return <p>Loading...</p>;
-  if (errorInfo || errorActivity) return <p>Error: {errorInfo || errorActivity}</p>;
+  // Now define separate type guards (using `kind` discriminator)
+  const isPost = (item: RedditPost | RedditComment): item is RedditPost => item.kind === 'post';
 
-  const isPost = (item: RedditItem): item is RedditPost => item.kind === 'post';
-  const isComment = (item: RedditItem): item is RedditComment => item.kind === 'comment';
+  // Handle optional created_utc defensively
+  const getAccountAgeYears = (createdUtc?: number) => {
+    if (!createdUtc) return 'Unknown';
+    const now = Date.now();
+    const created = createdUtc * 1000;
+    const diffMs = now - created;
+    return Math.floor(diffMs / (1000 * 60 * 60 * 24 * 365));
+  };
 
-  const posts = sortedItems.filter(isPost);
-  const comments = sortedItems.filter(isComment);
-
+  if (loading) return <p>Loading...</p>;
+  if (error) return <p>Error: {error}</p>;
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
         <h1 className={styles.username}>{username}'s Profile</h1>
-        <SortButtons
-          currentSort={sort}
-          hideBest={true}
-          useQueryParam={true}
-          basePath={basePath}
-        />
+        <SortButtons currentSort={sort} hideBest useQueryParam basePath={basePath} />
       </header>
 
       {info && (
         <section className={styles.info}>
           <div className={styles.infoItem}>
             <strong>Account Age</strong>
-            <span>{info.accountAge} years</span>
+            <span>{getAccountAgeYears(info.created_utc)} years</span>
           </div>
           <div className={styles.infoItem}>
             <strong>Post Karma</strong>
-            <span>{info.linkKarma}</span>
+            <span>{info.link_karma}</span>
           </div>
           <div className={styles.infoItem}>
             <strong>Comment Karma</strong>
-            <span>{info.commentKarma}</span>
+            <span>{info.comment_karma}</span>
           </div>
         </section>
       )}
 
       <section className={styles.section}>
-        <h2>Recent Posts</h2>
-        {posts.length === 0 ? (
-          <p>No posts available.</p>
+        <h2>Recent Activity</h2>
+        {sortedItems.length === 0 ? (
+          <p>No posts or comments available.</p>
         ) : (
-          posts.map((post) => (
-            <div key={post.id} className={styles.post}>
-              <a
-                href={`https://reddit.com${post.permalink}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                {post.title}
-              </a>
-            </div>
-          ))
-        )}
-      </section>
-
-      <section className={styles.section}>
-        <h2>Recent Comments</h2>
-        {comments.length === 0 ? (
-          <p>No comments available.</p>
-        ) : (
-          comments.map((comment) => (
-            <div key={comment.id}>
-              <p>{comment.body}</p>
-              <p style={{ fontSize: '0.8rem', color: '#666' }}>
-                <span title={new Date(comment.created_utc * 1000).toLocaleString()}>
-                  {formatPostAge(comment.created_utc)}
-                </span>
-              </p>
-            </div>
-          ))
+          sortedItems.map((item) =>
+            isPost(item) ? (
+              <div key={item.id} className={styles.post}>
+                <a href={`https://reddit.com${item.permalink}`} target="_blank" rel="noreferrer">
+                  {item.title}
+                </a>
+                <p style={{ fontSize: '0.8rem', color: '#666' }}>
+                  <span title={new Date(item.created_utc * 1000).toLocaleString()}>
+                    {formatPostAge(item.created_utc)}
+                  </span>
+                </p>
+              </div>
+            ) : (
+              <div key={item.id} className={styles.comment}>
+                <p>{item.body}</p>
+                <p style={{ fontSize: '0.8rem', color: '#666' }}>
+                  <span title={new Date(item.created_utc * 1000).toLocaleString()}>
+                    {formatPostAge(item.created_utc)}
+                  </span>
+                </p>
+              </div>
+            )
+          )
         )}
       </section>
     </div>

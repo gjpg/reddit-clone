@@ -1,71 +1,77 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import type { UserInfo, RedditItem } from '../types';
+import type { Post, UserComment, RedditAPIUser } from '../types';
 
-export const fetchUserInfo = createAsyncThunk<UserInfo, { token: string; username: string }, { rejectValue: string }>(
+export const fetchUserInfo = createAsyncThunk<
+  RedditAPIUser,
+  { token: string; username: string },  // <-- make sure this matches
+  { rejectValue: string }
+>(
   'user/fetchUserInfo',
   async ({ token, username }, thunkAPI) => {
+  try {
+    const response = await fetch(`https://oauth.reddit.com/user/${username}/about`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      return thunkAPI.rejectWithValue(error.message || 'Failed to fetch user info');
+    }
+
+    const json = await response.json();
+    const data = json.data;
+
+    const user: RedditAPIUser = {
+      id: data.id,
+      name: data.name,
+      icon_img: data.icon_img?.split('?')[0],
+      created_utc: data.created_utc,
+      link_karma: data.link_karma,
+      comment_karma: data.comment_karma,
+    };
+
+    return user;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+  }
+});
+
+export const fetchUserPosts = createAsyncThunk<Post[], { token: string; username: string }, { rejectValue: string }>(
+  'user/fetchUserPosts',
+  async ({ token, username }, thunkAPI) => {
     try {
-      const response = await fetch(`https://oauth.reddit.com/user/${username}/about`, {
+      const res = await fetch(`https://oauth.reddit.com/user/${username}/submitted`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (!response.ok) {
-        const error = await response.json();
-        return thunkAPI.rejectWithValue(error.message || 'Failed to fetch user info');
-      }
-      const json = await response.json();
-      const data = json.data;
 
-      // Map fields:
-      return {
-        username: data.name,
-        accountAge: Math.floor((Date.now() / 1000 - data.created_utc) / (60 * 60 * 24 * 365)), // seconds to years
-        linkKarma: data.link_karma,
-        commentKarma: data.comment_karma
-      };
-    } catch (error) {
-      return thunkAPI.rejectWithValue(error instanceof Error ? error.message : 'Unknown error');
+      if (!res.ok) {
+        const error = await res.json();
+        return thunkAPI.rejectWithValue(error.message || 'Failed to fetch user posts');
+      }
+
+      const data = await res.json();
+
+      const posts: Post[] = data.data.children.map((post: any) => ({
+        id: post.data.id,
+        title: post.data.title,
+        author: post.data.author,
+        url: post.data.url,
+        subreddit_name_prefixed: post.data.subreddit_name_prefixed,
+        thumbnail: post.data.thumbnail,
+        created_utc: post.data.created_utc,
+        permalink: post.data.permalink,
+        score: post.data.score ?? 'hidden',
+      }));
+
+      return posts;
+    } catch {
+      return thunkAPI.rejectWithValue('Failed to fetch user posts');
     }
   }
 );
 
-export const fetchUserPosts = createAsyncThunk<
-  RedditItem[],
-  { token: string; username: string },
-  { rejectValue: string }
->('user/fetchUserPosts', async ({ token, username }, thunkAPI) => {
-  try {
-    const res = await fetch(`https://oauth.reddit.com/user/${username}/submitted`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-
-    if (!res.ok) {
-      const error = await res.json();
-      return thunkAPI.rejectWithValue(error.message || 'Failed to fetch user posts');
-    }
-
-    const data = await res.json();
-
-    return data.data.children.map(
-      (post: any): RedditItem => ({
-        id: post.data.id,
-        author: post.data.author,
-        created_utc: post.data.created_utc,
-        permalink: post.data.permalink,
-        kind: 'post',
-        title: post.data.title,
-        url: post.data.url,
-        subreddit_name_prefixed: post.data.subreddit_name_prefixed,
-        thumbnail: post.data.thumbnail,
-        score: post.data.score
-      })
-    );
-  } catch {
-    return thunkAPI.rejectWithValue('Failed to fetch user posts');
-  }
-});
-
 export const fetchUserComments = createAsyncThunk<
-  RedditItem[],
+  UserComment[],
   { token: string; username: string },
   { rejectValue: string }
 >('user/fetchUserComments', async ({ token, username }, thunkAPI) => {
@@ -81,83 +87,77 @@ export const fetchUserComments = createAsyncThunk<
 
     const data = await res.json();
 
-    return data.data.children.map(
-      (comment: any): RedditItem => ({
-        id: comment.data.id,
-        author: comment.data.author,
-        created_utc: comment.data.created_utc,
-        permalink: comment.data.permalink,
-        kind: 'comment',
-        body: comment.data.body,
-        score: comment.data.score
-      })
-    );
+    const comments: UserComment[] = data.data.children.map((comment: any) => ({
+      id: comment.data.id,
+      body: comment.data.body,
+      created_utc: comment.data.created_utc,
+      author: comment.data.author,
+      permalink: comment.data.permalink,
+      subreddit_name_prefixed: comment.data.subreddit_name_prefixed,
+      score: comment.data.score ?? 'hidden',
+    }));
+
+    return comments;
   } catch {
     return thunkAPI.rejectWithValue('Failed to fetch user comments');
   }
 });
 
 export const fetchUserActivity = createAsyncThunk<
-  RedditItem[],
+  { posts: Post[]; comments: UserComment[] },
   { token: string; username: string; sort?: string },
   { rejectValue: string }
->('user/fetchUserActivity', async ({ token, username, sort = 'new' }, thunkAPI) => {
-  try {
-    const query = `?sort=${sort}`;
+>(
+  'user/fetchUserActivity',
+  async ({ token, username, sort = 'new' }, thunkAPI) => {
+    try {
+      const query = `?sort=${sort}`;
 
-    // Fetch posts
-    const postsRes = await fetch(`https://oauth.reddit.com/user/${username}/submitted${query}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+      const postsRes = await fetch(`https://oauth.reddit.com/user/${username}/submitted${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    if (!postsRes.ok) {
-      const error = await postsRes.json();
-      return thunkAPI.rejectWithValue(error.message || 'Failed to fetch user posts');
-    }
+      if (!postsRes.ok) {
+        const error = await postsRes.json();
+        return thunkAPI.rejectWithValue(error.message || 'Failed to fetch user posts');
+      }
 
-    const postsJson = await postsRes.json();
-    const posts: RedditItem[] = postsJson.data.children.map(
-      (post: any): RedditItem => ({
+      const postsJson = await postsRes.json();
+      const posts: Post[] = postsJson.data.children.map((post: any) => ({
         id: post.data.id,
-        author: post.data.author,
-        created_utc: post.data.created_utc,
-        permalink: post.data.permalink,
-        kind: 'post',
         title: post.data.title,
+        author: post.data.author,
         url: post.data.url,
         subreddit_name_prefixed: post.data.subreddit_name_prefixed,
         thumbnail: post.data.thumbnail,
-        score: post.data.score
-      })
-    );
+        created_utc: post.data.created_utc,
+        permalink: post.data.permalink,
+        score: post.data.score ?? 'hidden',
+      }));
 
-    // Fetch comments
-    const commentsRes = await fetch(`https://oauth.reddit.com/user/${username}/comments${query}`, {
-      headers: { Authorization: `Bearer ${token}` }
-    });
+      const commentsRes = await fetch(`https://oauth.reddit.com/user/${username}/comments${query}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    if (!commentsRes.ok) {
-      const error = await commentsRes.json();
-      return thunkAPI.rejectWithValue(error.message || 'Failed to fetch user comments');
-    }
+      if (!commentsRes.ok) {
+        const error = await commentsRes.json();
+        return thunkAPI.rejectWithValue(error.message || 'Failed to fetch user comments');
+      }
 
-    const commentsJson = await commentsRes.json();
-    const comments: RedditItem[] = commentsJson.data.children.map(
-      (comment: any): RedditItem => ({
+      const commentsJson = await commentsRes.json();
+      const comments: UserComment[] = commentsJson.data.children.map((comment: any) => ({
         id: comment.data.id,
-        author: comment.data.author,
-        created_utc: comment.data.created_utc,
-        permalink: comment.data.permalink,
-        kind: 'comment',
         body: comment.data.body,
-        score: comment.data.score   
-      })
-    );
+        created_utc: comment.data.created_utc,
+        author: comment.data.author,
+        permalink: comment.data.permalink,
+        subreddit_name_prefixed: comment.data.subreddit_name_prefixed,
+        score: comment.data.score ?? 'hidden',
+      }));
 
-    // Combine and sort
-    const combined = [...posts, ...comments].sort((a, b) => b.created_utc - a.created_utc);
-    return combined;
-  } catch (error) {
-    return thunkAPI.rejectWithValue('Failed to fetch user activity');
+      return { posts, comments };
+    } catch (error) {
+      return thunkAPI.rejectWithValue('Failed to fetch user activity');
+    }
   }
-});
+);

@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { unwrapResult } from '@reduxjs/toolkit';
 import { setTokens, setError, setLoading } from '../../store/auth/authSlice';
-import { exchangeCodeForToken, fetchUserInfo } from '../../actions/authActions';
+import { exchangeCodeForToken } from '../../actions/authActions';
+import { fetchUserInfo } from '../../actions/userActions';
 import { useAppDispatch } from '../../store/hooks';
 
 const Callback = () => {
@@ -24,7 +25,7 @@ const Callback = () => {
   }, []);
 
   useEffect(() => {
-    if (didRun.current) return; // <== prevent re-running in dev Strict Mode
+    if (didRun.current) return;
     didRun.current = true;
 
     const code = searchParams.get('code');
@@ -41,22 +42,34 @@ const Callback = () => {
       try {
         dispatch(setLoading(true));
 
-        // Dispatch thunk to exchange code for token and unwrap result
+        console.log('Exchanging code for token...');
         const tokenAction = await dispatch(exchangeCodeForToken(code));
         const tokenResponse = unwrapResult(tokenAction);
 
-        const { access_token, refresh_token, expires_in } = tokenResponse;
+        console.log('Fetching current user info (for username)...');
+        // Fetch username from /api/v1/me
+        const meRes = await fetch('https://oauth.reddit.com/api/v1/me', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
+        });
+        if (!meRes.ok) {
+          throw new Error('Failed to fetch current user info');
+        }
+        const meJson = await meRes.json();
+        const username = meJson.name;
+        if (!username) {
+          throw new Error('Username not found in user info');
+        }
 
-        // Dispatch thunk to fetch user info with access token
-        const userAction = await dispatch(fetchUserInfo(access_token));
+        console.log('Fetching detailed user info via thunk...');
+        // Now call your fetchUserInfo thunk with both token and username
+        const userAction = await dispatch(fetchUserInfo({ token: tokenResponse.access_token, username }));
         const user = unwrapResult(userAction);
 
-        // Save credentials to Redux store
         dispatch(
           setTokens({
-            accessToken: access_token,
-            refreshToken: refresh_token,
-            expiresAt: expires_in ? Date.now() + expires_in * 1000 : null,
+            accessToken: tokenResponse.access_token,
+            refreshToken: tokenResponse.refresh_token,
+            expiresAt: tokenResponse.expires_in ? Date.now() + tokenResponse.expires_in * 1000 : null,
             userData: user
           })
         );

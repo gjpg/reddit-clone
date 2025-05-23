@@ -7,4 +7,6 @@ export type Post = {
   subreddit_name_prefixed: string;
   thumbnail?: string;
   created_utc: number;
+  permalink: string;
+  score: number | 'hidden';
 };
