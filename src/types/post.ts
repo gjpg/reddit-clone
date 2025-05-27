@@ -9,4 +9,6 @@ export type Post = {
   created_utc: number;
   permalink: string;
   score: number | 'hidden';
+  likes?: boolean | null; 
+  archived?: boolean; 
 };

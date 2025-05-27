@@ -6,7 +6,7 @@ import type { RedditPost, RedditComment } from '../../types/reddit';
 
 interface PostsState {
   posts: Post[];
-  userPosts: RedditPost[];      // user submitted posts
+  userPosts: RedditPost[]; // user submitted posts
   userComments: RedditComment[]; // user comments
   loading: boolean;
   userActivityLoading: boolean;
@@ -86,7 +86,9 @@ export const fetchUserActivity = createAsyncThunk<
       url: post.data.url,
       subreddit_name_prefixed: post.data.subreddit_name_prefixed,
       thumbnail: post.data.thumbnail,
-      score: post.data.score ?? 0
+      score: post.data.score ?? 0,
+      likes: post.data.likes ?? null,
+      archived: post.data.archived ?? false
     }));
 
     // Map comments
@@ -98,7 +100,9 @@ export const fetchUserActivity = createAsyncThunk<
       kind: 'comment',
       body: comment.data.body,
       subreddit_name_prefixed: comment.data.subreddit_name_prefixed,
-      score: comment.data.score ?? 0
+      score: comment.data.score ?? 0,
+      likes: comment.data.likes ?? null,
+      archived: comment.data.archived ?? false
     }));
 
     return { posts: mappedPosts, comments: mappedComments };
@@ -144,11 +148,14 @@ const postsSlice = createSlice({
         state.userActivityLoading = true;
         state.userActivityError = null;
       })
-      .addCase(fetchUserActivity.fulfilled, (state, action: PayloadAction<{ posts: RedditPost[]; comments: RedditComment[] }>) => {
-        state.userPosts = action.payload.posts;
-        state.userComments = action.payload.comments;
-        state.userActivityLoading = false;
-      })
+      .addCase(
+        fetchUserActivity.fulfilled,
+        (state, action: PayloadAction<{ posts: RedditPost[]; comments: RedditComment[] }>) => {
+          state.userPosts = action.payload.posts;
+          state.userComments = action.payload.comments;
+          state.userActivityLoading = false;
+        }
+      )
       .addCase(fetchUserActivity.rejected, (state, action) => {
         state.userActivityError = action.payload || 'Failed to fetch user activity';
         state.userActivityLoading = false;

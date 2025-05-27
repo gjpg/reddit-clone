@@ -14,7 +14,9 @@ export function mapPostToRedditPost(post: Post): RedditPost {
     created_utc: post.created_utc,
     url: post.url,
     thumbnail: post.thumbnail,
-    score: 0
+    score: 0,
+    likes: post.likes ?? null,
+    archived: post.archived ?? false
   };
 }
 
@@ -27,7 +29,9 @@ export function mapCommentToRedditComment(comment: UserComment): RedditComment {
     subreddit_name_prefixed: comment.subreddit_name_prefixed ?? 'unknown',
     permalink: comment.permalink ?? '#',
     created_utc: comment.created_utc,
-    score: 0
+    score: 0,
+    likes: comment.likes ?? null,
+    archived: false
   };
 }
 

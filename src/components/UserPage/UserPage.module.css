@@ -53,7 +53,8 @@
   margin-bottom: 1rem;
 }
 
-.post, .comment {
+.post,
+.comment {
   background: #fff;
   padding: 1rem;
   margin-bottom: 1rem;
@@ -75,4 +76,16 @@
   margin: 0;
   line-height: 1.4;
   color: #555;
+}
+
+.itemRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.post,
+.comment {
+  flex: 1;
 }

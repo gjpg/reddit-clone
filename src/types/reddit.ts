@@ -5,6 +5,8 @@ export interface RedditItemBase {
   permalink: string;
   score: number | 'hidden';
   subreddit_name_prefixed: string;
+  likes?: boolean | null;
+  archived?: boolean; 
 }
 
 export interface RedditPost extends RedditItemBase {

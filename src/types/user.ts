@@ -19,6 +19,8 @@ export interface UserPost {
   score?: number | 'hidden';
   created_utc?: number;
   thumbnail?: string;
+  likes?: boolean | null;
+  archived?: boolean;
   // optionally add `kind` if you want discrimination here too
 }
 
@@ -31,6 +33,8 @@ export interface UserComment {
   permalink: string;
   subreddit_name_prefixed: string;
   score?: number | 'hidden';
+  likes?: boolean | null;
+  archived?: boolean;
   // optionally add `kind` here too
 }
 
