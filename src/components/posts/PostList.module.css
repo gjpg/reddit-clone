@@ -1,51 +1,8 @@
 /* PostList.module.css */
+
 .postList {
   display: flex;
   flex-direction: column;
   gap: 1rem;
   padding: 1rem;
-}
-
-.postCard {
-  background-color: #fff;
-  padding: 1rem;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  transition: box-shadow 0.2s ease-in-out;
-}
-
-.postCard:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
-}
-
-.title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #0079d3;
-  text-decoration: none;
-}
-
-.title:hover {
-  text-decoration: underline;
-}
-
-.author {
-  font-size: 0.9rem;
-  color: #555;
-  margin-top: 0.5rem;
-}
-
-.postContent {
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-}
-
-.thumbnail {
-  width: 100px;
-  height: auto;
-  object-fit: cover;
-  border-radius: 4px;
-  margin-right: 1rem;
 }

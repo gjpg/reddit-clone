@@ -1,6 +1,6 @@
 // components/VoteBox.tsx
 import React from 'react';
-import styles from './VoteBox.module.css'; // we'll create this
+import styles from './VoteBox.module.css';
 import LockIcon from '../../assets/lock.svg';
 
 export interface VoteBoxProps {
@@ -9,9 +9,17 @@ export interface VoteBoxProps {
   disabled?: boolean;
   archived?: boolean;
   onVote: (dir: 1 | 0 | -1) => void;
+  showScore?: boolean; // New prop
 }
 
-const VoteBox: React.FC<VoteBoxProps> = ({ score, likes, onVote, disabled, archived }) => {
+const VoteBox: React.FC<VoteBoxProps> = ({
+  score,
+  likes,
+  onVote,
+  disabled,
+  archived,
+  showScore = true, // Default to true
+}) => {
   const handleVote = (dir: 1 | 0 | -1) => {
     if (disabled || !onVote) return;
     if ((dir === 1 && likes === true) || (dir === -1 && likes === false)) {
@@ -31,17 +39,19 @@ const VoteBox: React.FC<VoteBoxProps> = ({ score, likes, onVote, disabled, archi
         ▲
       </button>
 
-      <div className={styles.scoreWithIcon}>
-        <span className={styles.score}>{score === 'hidden' ? '•' : score}</span>
-        {archived && (
-          <img
-            src={LockIcon}
-            alt="Archived"
-            title="Voting is disabled on archived posts/comments."
-            className={styles.lockIcon}
-          />
-        )}
-      </div>
+      {showScore && (
+        <div className={styles.scoreWithIcon}>
+          <span className={styles.score}>{score === 'hidden' ? '•' : score}</span>
+          {archived && (
+            <img
+              src={LockIcon}
+              alt="Archived"
+              title="Voting is disabled on archived posts/comments."
+              className={styles.lockIcon}
+            />
+          )}
+        </div>
+      )}
 
       <button
         className={`${styles.arrow} ${likes === false ? styles.downvoted : ''}`}

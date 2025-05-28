@@ -1,16 +1,16 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams, useSearchParams } from 'react-router-dom';
-import { fetchUserInfo, fetchUserActivity } from '../../actions/userActions';
+import { fetchUserInfo } from '../../actions/userActions';
+import { fetchUserActivity } from '../../store/posts/postsSlice';
 import type { RootState } from '../../store/store';
 import styles from './UserPage.module.css';
-import { formatPostAge } from '../../utils/time';
 import type { RedditPost, RedditComment } from '../../types'; // No RedditItem import now
-import SortButtons from '../SortButtons/SortButtons';
 import { sortContent } from '../../utils/sortContent';
-import VoteBox from '../VoteBox/VoteBox';
 import { voteOnItem } from '../../actions/voteActions';
 import { selectUserPosts, selectUserComments } from '../../store/posts/postsSlice';
+import PostItem from '../PostItem/PostItem';
+import CommentItem from '../CommentItem/CommentItem';
 
 const DebugLogger = () => {
   const userPosts = useSelector(selectUserPosts);
@@ -38,7 +38,6 @@ const UserPage: React.FC = () => {
   const [params] = useSearchParams();
   const sort = (params.get('sort') as 'new' | 'top' | 'hot') ?? 'new';
   const timespan = (params.get('t') as 'day' | 'month' | 'year' | 'all') ?? 'all';
-  const basePath = `/user/${username}`;
 
   // Add kind discriminator explicitly (optional if you always set kind on data source)
   const postsWithKind: RedditPost[] = posts.map((post) => ({
@@ -74,7 +73,7 @@ const UserPage: React.FC = () => {
   useEffect(() => {
     if (token && username) {
       dispatch(fetchUserInfo({ token, username }) as any);
-      dispatch(fetchUserActivity({ token, username, sort }) as any);
+      dispatch(fetchUserActivity({ token, username }) as any);
     }
   }, [token, username, sort, dispatch]);
 
@@ -97,7 +96,6 @@ const UserPage: React.FC = () => {
       <DebugLogger />
       <header className={styles.header}>
         <h1 className={styles.username}>{username}'s Profile</h1>
-        <SortButtons currentSort={sort} hideBest useQueryParam basePath={basePath} />
       </header>
 
       {info && (
@@ -122,42 +120,18 @@ const UserPage: React.FC = () => {
         {sortedItems.length === 0 ? (
           <p>No posts or comments available.</p>
         ) : (
-          sortedItems.map((item) => {
-            return (
-              <div key={item.id} className={styles.itemRow}>
-                <VoteBox
-                  score={item.score}
-                  likes={item.likes}
-                  disabled={!token || item.archived}
-                  archived={item.archived}
-                  onVote={(dir) => handleVote(item.id, dir, isPost(item) ? 'post' : 'comment')}
-                />
-                <div className={isPost(item) ? styles.post : styles.comment}>
-                  {isPost(item) ? (
-                    <>
-                      <a href={`https://reddit.com${item.permalink}`} target="_blank" rel="noreferrer">
-                        {item.title}
-                      </a>
-                      <p style={{ fontSize: '0.8rem', color: '#666' }}>
-                        <span title={new Date(item.created_utc * 1000).toLocaleString()}>
-                          {formatPostAge(item.created_utc)}
-                        </span>{' '}
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      <p>{item.body}</p>
-                      <p style={{ fontSize: '0.8rem', color: '#666' }}>
-                        <span title={new Date(item.created_utc * 1000).toLocaleString()}>
-                          {formatPostAge(item.created_utc)}
-                        </span>{' '}
-                      </p>
-                    </>
-                  )}
-                </div>
-              </div>
-            );
-          })
+          sortedItems.map((item) =>
+            isPost(item) ? (
+              <PostItem key={item.id} post={item} token={token} onVote={(dir) => handleVote(item.id, dir, 'post')} />
+            ) : (
+              <CommentItem
+                key={item.id}
+                comment={item}
+                token={token}
+                onVote={(dir) => handleVote(item.id, dir, 'comment')}
+              />
+            )
+          )
         )}
       </section>
     </div>

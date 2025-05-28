@@ -10,6 +10,7 @@ import dropdownIcon from '../../assets/dropdown.svg';
 import { startOAuthFlow } from '../../services/auth';
 import { logout } from '../../store/auth/authSlice';
 import SortButtons from '../SortButtons/SortButtons';
+import { matchPath } from 'react-router-dom';
 
 const useTypedSelector: TypedUseSelectorHook<RootState> = useSelector;
 
@@ -118,7 +119,18 @@ const Navbar = () => {
 
       {/* Sort Buttons */}
 
-      <SortButtons currentSort={currentSort} />
+      {location.pathname.startsWith('/user/') && (
+        <SortButtons
+          currentSort={(new URLSearchParams(location.search).get('sort') as 'hot' | 'new' | 'top') || 'new'}
+          basePath={location.pathname}
+          useQueryParam
+          hideBest
+        />
+      )}
+
+      {(location.pathname === '/' || matchPath('/r/:subreddit', location.pathname)) && (
+        <SortButtons currentSort={currentSort} />
+      )}
     </nav>
   );
 };

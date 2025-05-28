@@ -1,4 +1,8 @@
-export interface RedditItemBase {
+export interface RedditPost {
+  kind: 'post';
+  title: string;
+  url: string;
+  thumbnail?: string;
   id: string;
   author: string;
   created_utc: number;
@@ -6,17 +10,21 @@ export interface RedditItemBase {
   score: number | 'hidden';
   subreddit_name_prefixed: string;
   likes?: boolean | null;
-  archived?: boolean; 
+  archived?: boolean;
+  num_comments?: number;
 }
 
-export interface RedditPost extends RedditItemBase {
-  kind: 'post';
-  title: string;
-  url: string;
-  thumbnail?: string;
-}
-
-export interface RedditComment extends RedditItemBase {
+export interface RedditComment {
   kind: 'comment';
   body: string;
+  id: string;
+  author: string;
+  created_utc: number;
+  permalink: string;
+  score: number | 'hidden';
+  subreddit_name_prefixed: string;
+  likes?: boolean | null;
+  archived?: boolean;
+  num_comments?: number;
+  title?: string;
 }

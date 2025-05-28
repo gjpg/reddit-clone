@@ -1,5 +1,7 @@
 import { createAsyncThunk } from '@reduxjs/toolkit';
-import type { Post, UserComment, RedditAPIUser } from '../types';
+import type { Post, RedditAPIUser, RedditComment } from '../types';
+
+// import type { Post, UserComment, RedditAPIUser } from '../types';
 
 export const fetchUserInfo = createAsyncThunk<
   RedditAPIUser,
@@ -73,7 +75,7 @@ export const fetchUserPosts = createAsyncThunk<
 });
 
 export const fetchUserComments = createAsyncThunk<
-  UserComment[],
+  RedditComment[],
   { token: string; username: string },
   { rejectValue: string }
 >('user/fetchUserComments', async ({ token, username }, thunkAPI) => {
@@ -89,7 +91,7 @@ export const fetchUserComments = createAsyncThunk<
 
     const data = await res.json();
 
-    const comments: UserComment[] = data.data.children.map((comment: any) => ({
+    const comments: RedditComment[] = data.data.children.map((comment: any) => ({
       id: comment.data.id,
       body: comment.data.body,
       created_utc: comment.data.created_utc,
@@ -108,11 +110,11 @@ export const fetchUserComments = createAsyncThunk<
   }
 });
 
-export const fetchUserActivity = createAsyncThunk<
-  { posts: Post[]; comments: UserComment[] },
+export const fetchRedditUserActivity = createAsyncThunk<
+  { posts: Post[]; comments: RedditComment[] },
   { token: string; username: string; sort?: string },
   { rejectValue: string }
->('user/fetchUserActivity', async ({ token, username, sort = 'new' }, thunkAPI) => {
+>('user/fetchRedditUserActivity', async ({ token, username, sort = 'new' }, thunkAPI) => {
   try {
     const query = `?sort=${sort}`;
 
@@ -151,7 +153,7 @@ export const fetchUserActivity = createAsyncThunk<
     }
 
     const commentsJson = await commentsRes.json();
-    const comments: UserComment[] = commentsJson.data.children.map((comment: any) => ({
+    const comments: RedditComment[] = commentsJson.data.children.map((comment: any) => ({
       id: comment.data.id,
       body: comment.data.body,
       created_utc: comment.data.created_utc,

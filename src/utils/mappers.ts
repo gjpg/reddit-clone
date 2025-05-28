@@ -1,7 +1,9 @@
 // src/utils/redditMappings.ts
 import type { RedditAPIUser, User } from '../types';
 
-import type { RedditPost, RedditComment, Post, UserComment } from '../types';
+import type { RedditPost, RedditComment, Post } from '../types';
+// import type { RedditPost, RedditComment, Post, UserComment } from '../types';
+
 
 export function mapPostToRedditPost(post: Post): RedditPost {
   return {
@@ -20,7 +22,7 @@ export function mapPostToRedditPost(post: Post): RedditPost {
   };
 }
 
-export function mapCommentToRedditComment(comment: UserComment): RedditComment {
+export function mapCommentToRedditComment(comment: RedditComment): RedditComment {
   return {
     kind: 'comment',
     id: comment.id,

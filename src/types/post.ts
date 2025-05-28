@@ -9,6 +9,7 @@ export type Post = {
   created_utc: number;
   permalink: string;
   score: number | 'hidden';
-  likes?: boolean | null; 
-  archived?: boolean; 
+  likes?: boolean | null;
+  archived?: boolean;
+  kind: 'post' | 'comment'; // Add kind to differentiate from comments
 };

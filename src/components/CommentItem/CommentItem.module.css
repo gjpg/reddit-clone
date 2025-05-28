@@ -1,0 +1,14 @@
+.itemRow {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.comment {
+  flex-grow: 1;
+}
+
+.timestamp {
+  font-size: 0.8rem;
+  color: #666;
+}

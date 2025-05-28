@@ -11,32 +11,32 @@ export interface User {
 }
 
 // User post type, separate from RedditPost if needed
-export interface UserPost {
-  id: string;
-  title: string;
-  permalink: string;
-  subreddit?: string;
-  score?: number | 'hidden';
-  created_utc?: number;
-  thumbnail?: string;
-  likes?: boolean | null;
-  archived?: boolean;
-  // optionally add `kind` if you want discrimination here too
-}
+// export interface UserPost {
+//   id: string;
+//   title: string;
+//   permalink: string;
+//   subreddit?: string;
+//   score?: number | 'hidden';
+//   created_utc?: number;
+//   thumbnail?: string;
+//   likes?: boolean | null;
+//   archived?: boolean;
+//   // optionally add `kind` if you want discrimination here too
+// }
 
-// User comment type, separate from RedditComment if needed
-export interface UserComment {
-  id: string;
-  body: string;
-  created_utc: number;
-  author: string;
-  permalink: string;
-  subreddit_name_prefixed: string;
-  score?: number | 'hidden';
-  likes?: boolean | null;
-  archived?: boolean;
-  // optionally add `kind` here too
-}
+// // User comment type, separate from RedditComment if needed
+// export interface UserComment {
+//   id: string;
+//   body: string;
+//   created_utc: number;
+//   author: string;
+//   permalink: string;
+//   subreddit_name_prefixed: string;
+//   score?: number | 'hidden';
+//   likes?: boolean | null;
+//   archived?: boolean;
+//   // optionally add `kind` here too
+// }
 
 // Exact shape returned by Reddit's /api/v1/me
 export interface RedditAPIUser {
