@@ -87,9 +87,24 @@ app.get('/api/posts', async (req: Request, res: Response): Promise<void> => {
   }
 
   const accessToken = authHeader.split(' ')[1];
+  const { subreddit, sort = 'hot', t = 'week' } = req.query as { subreddit?: string; sort?: string; t?: string };
+
+  // Validate timespan param for Reddit API
+  const validTimespans = ['hour', 'day', 'week', 'month', 'year', 'all'];
+  const timespan = validTimespans.includes(t) ? t : 'week';
+
+  // Construct Reddit API URL depending on subreddit presence
+  let redditApiUrl = subreddit
+    ? `https://oauth.reddit.com/r/${subreddit}/${sort}`
+    : `https://oauth.reddit.com/${sort}`;
+
+  // Append timespan if sort=top (Reddit supports 't' only on 'top' sorting)
+  if (sort === 'top') {
+    redditApiUrl += `?t=${timespan}`;
+  }
 
   try {
-    const redditRes = await axios.get('https://oauth.reddit.com/hot', {
+    const redditRes = await axios.get(redditApiUrl, {
       headers: {
         Authorization: `Bearer ${accessToken}`,
         'User-Agent': `web:myredditviewer:v1.0.0 (by /u/${process.env.REDDIT_USERNAME})`
@@ -113,7 +128,13 @@ app.get('/api/posts', async (req: Request, res: Response): Promise<void> => {
         url: data.url,
         subreddit_name_prefixed: data.subreddit_name_prefixed,
         thumbnail,
-        created_utc: data.created_utc // ✅ Add this line
+        created_utc: data.created_utc,
+        permalink: data.permalink,
+        kind: data.kind,
+        score: data.score ?? 0,
+        num_comments: data.num_comments ?? 0,
+        archived: data.archived ?? false,
+        likes: data.likes ?? null
       };
     });
 

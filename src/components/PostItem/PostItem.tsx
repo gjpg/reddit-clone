@@ -1,4 +1,3 @@
-// components/PostItem/PostItem.tsx
 import React from 'react';
 import type { RedditPost } from '../../types';
 import VoteBox from '../VoteBox/VoteBox';
@@ -18,6 +17,8 @@ const PostItem: React.FC<PostItemProps> = ({ post, token, onVote, showThumbnail 
   const isValidThumbnail = (url?: string) =>
     url && url.startsWith('http') && !['self', 'default', 'nsfw', 'image'].includes(url);
 
+  const postLink = `${post.subreddit_name_prefixed}/comments/${post.id}`;
+
   return (
     <div className={styles.itemRow}>
       <VoteBox
@@ -31,16 +32,22 @@ const PostItem: React.FC<PostItemProps> = ({ post, token, onVote, showThumbnail 
         {showThumbnail && isValidThumbnail(post.thumbnail) && (
           <img src={post.thumbnail} alt="Post preview" className={styles.thumbnail} />
         )}
-        <a href={post.url} target="_blank" rel="noopener noreferrer" className={styles.title}>
+
+        <Link to={postLink} className={styles.title}>
           {post.title}
-        </a>
+        </Link>
+
         <p className={styles.meta}>
           {showAuthor && (
             <>
               by <Link to={`/user/${post.author}`}>{post.author}</Link> •{' '}
             </>
           )}
-          <span title={new Date(post.created_utc * 1000).toLocaleString()}>{formatPostAge(post.created_utc)}</span>
+          <Link to={`/${post.subreddit_name_prefixed}`}>{post.subreddit_name_prefixed}</Link> •{' '}
+          <span title={new Date(post.created_utc * 1000).toLocaleString()}>{formatPostAge(post.created_utc)}</span> •{' '}
+          <Link to={postLink}>
+            {post.num_comments ?? 0} comment{post.num_comments === 1 ? '' : 's'}
+          </Link>
         </p>
       </div>
     </div>

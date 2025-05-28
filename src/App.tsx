@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 
 import Navbar from './components/Navbar/Navbar';
@@ -6,32 +5,25 @@ import Callback from './components/Callback/Callback';
 import PostList from './components/posts/PostList';
 import UserPage from './components/UserPage/UserPage';
 
-import { fetchPosts } from './actions/fetchPosts';
-import { useAppDispatch, useAppSelector, useAuthInit } from './store/hooks';
+import { useAuthInit } from './store/hooks';
+
+// App.tsx simplified:
 
 const App = () => {
   useAuthInit();
-  const dispatch = useAppDispatch();
-  const accessToken = useAppSelector((state) => state.auth.accessToken);
-
-  // Fetch posts when accessToken becomes available
-  useEffect(() => {
-    if (accessToken) {
-      dispatch(fetchPosts(accessToken));
-    }
-  }, [accessToken, dispatch]);
+  // no dispatch(fetchPosts) here
 
   return (
     <>
       <Navbar />
       <Routes>
         <Route path="/" element={<PostList />} />
-        <Route path="/hot" element={<PostList />} />
-        <Route path="/new" element={<PostList />} />
-        <Route path="/top" element={<PostList />} />
+        <Route path="/:sort" element={<PostList />} />
+        <Route path="/r/:subreddit" element={<PostList />} />
+        <Route path="/r/:subreddit/:sort" element={<PostList />} />
+
         <Route path="/callback" Component={Callback} />
         <Route path="/user/:username" element={<UserPage />} />
-        <Route path="/" element={<PostList />} />
       </Routes>
     </>
   );

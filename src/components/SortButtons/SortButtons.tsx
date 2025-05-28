@@ -15,15 +15,23 @@ const SortButtons: React.FC<SortButtonsProps> = ({
   currentSort,
   basePath = '',
   useQueryParam = false,
-  hideBest = false,
+  hideBest = false
 }) => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const availableSorts = ['new', 'top', ...(hideBest ? [] : ['hot'])];
 
-  const timespans = ['day', 'month', 'year', 'all'] as const;
-  const currentTimespan = searchParams.get('t') ?? 'all';
+  const timespans = ['day', 'week', 'month', 'year', 'all'] as const;
+  const timespanLabels: Record<string, string> = {
+    day: 'day',
+    week: 'week', // we'll handle this on backend/client
+    month: 'month',
+    year: 'year',
+    all: 'all'
+  };
+
+  const currentTimespan = searchParams.get('t') ?? 'week';
 
   const handleSortChange = (sort: string) => {
     if (useQueryParam) {
@@ -64,7 +72,7 @@ const SortButtons: React.FC<SortButtonsProps> = ({
               onClick={() => handleTimespanChange(t)}
               className={currentTimespan === t ? styles.active : ''}
             >
-              {t}
+              {timespanLabels[t]}
             </button>
           ))}
         </div>
