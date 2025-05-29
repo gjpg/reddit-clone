@@ -1,14 +1,70 @@
 .itemRow {
   display: flex;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-top: 1rem;
 }
 
 .comment {
-  flex-grow: 1;
+  flex: 1;
+  background-color: #f9f9f9;
+  padding: 0.75rem;
+  border-radius: 6px;
 }
 
-.timestamp {
-  font-size: 0.8rem;
+.meta {
+  font-size: 0.85rem;
   color: #666;
+  margin-bottom: 0.5rem;
+}
+
+.author {
+  font-weight: bold;
+  color: #0079d3;
+}
+
+.permalink {
+  color: #999;
+  text-decoration: none;
+}
+
+.permalink:hover {
+  text-decoration: underline;
+}
+
+.replyButton {
+  margin-top: 0.5rem;
+  background: none;
+  border: none;
+  color: #0079d3;
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 0;
+}
+
+.replyButton:hover {
+  text-decoration: underline;
+}
+
+.replyBox {
+  margin-top: 0.5rem;
+}
+
+.replyBox textarea {
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.9rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 0.5rem;
+  resize: vertical;
+}
+
+.replyBox button {
+  margin-top: 0.25rem;
+  background-color: #0079d3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 0.3rem 0.75rem;
+  cursor: pointer;
 }

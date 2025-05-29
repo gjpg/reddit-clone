@@ -5,7 +5,7 @@ import { fetchUserInfo } from '../../actions/userActions';
 import { fetchUserActivity } from '../../store/posts/postsSlice';
 import type { RootState } from '../../store/store';
 import styles from './UserPage.module.css';
-import type { RedditPost, RedditComment } from '../../types'; // No RedditItem import now
+import type { RedditPost, RedditComment, CommentNode } from '../../types'; // No RedditItem import now
 import { sortContent } from '../../utils/sortContent';
 import { voteOnItem } from '../../actions/voteActions';
 import { selectUserPosts, selectUserComments } from '../../store/posts/postsSlice';
@@ -88,6 +88,11 @@ const UserPage: React.FC = () => {
     return Math.floor(diffMs / (1000 * 60 * 60 * 24 * 365));
   };
 
+  const convertToCommentNode = (comment: RedditComment): CommentNode => ({
+    ...comment,
+    replies: [] // or convert children if needed
+  });
+
   if (loading) return <p>Loading...</p>;
   if (error) return <p>Error: {error}</p>;
 
@@ -126,7 +131,7 @@ const UserPage: React.FC = () => {
             ) : (
               <CommentItem
                 key={item.id}
-                comment={item}
+                comment={convertToCommentNode(item)}
                 token={token}
                 onVote={(dir) => handleVote(item.id, dir, 'comment')}
               />

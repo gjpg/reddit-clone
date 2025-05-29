@@ -28,4 +28,19 @@ export interface RedditComment {
   num_comments?: number;
   title?: string;
   parent_id?: string;
+  replies?: RedditListing | string;
+}
+
+export interface RedditListing {
+  kind: string;
+  data: {
+    children: {
+      kind: string;
+      data: RedditComment;
+    }[];
+  };
+}
+
+export interface CommentNode extends Omit<RedditComment, 'replies'> {
+  replies: CommentNode[];
 }

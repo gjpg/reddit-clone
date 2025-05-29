@@ -7,12 +7,8 @@ import CommentItem from '../CommentItem/CommentItem';
 import styles from './PostPage.module.css';
 import { voteOnItem } from '../../actions/voteActions';
 import VoteBox from '../VoteBox/VoteBox';
-import type { RedditComment } from '../../types';
-
-// Extend RedditComment with replies
-interface CommentNode extends RedditComment {
-  replies: CommentNode[];
-}
+import type { RedditComment, CommentNode } from '../../types';
+import CommentForm from '../CommentForm/CommentForm';
 
 const PostPage: React.FC = () => {
   const { subreddit, postId } = useParams<{ subreddit: string; postId: string }>();
@@ -101,6 +97,21 @@ const PostPage: React.FC = () => {
   return (
     <div className={styles.container}>
       {renderPostContent()}
+
+      {token && post && (
+        <div className={styles.commentFormWrapper}>
+          <h3>Add a comment</h3>
+          <CommentForm
+            parentId={`t3_${post.id}`}
+            token={token}
+            onSuccess={() => {
+              // Refresh post details or comments after successful submit
+              dispatch(fetchPostDetails({ subreddit: subreddit!, postId: postId! }));
+            }}
+          />
+        </div>
+      )}
+
       <h2>Comments</h2>
       <div className={styles.comments}>
         {commentTree.length === 0 ? <p>No comments yet.</p> : renderCommentTree(commentTree)}
