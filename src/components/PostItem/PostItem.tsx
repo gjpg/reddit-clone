@@ -17,7 +17,9 @@ const PostItem: React.FC<PostItemProps> = ({ post, token, onVote, showThumbnail 
   const isValidThumbnail = (url?: string) =>
     url && url.startsWith('http') && !['self', 'default', 'nsfw', 'image'].includes(url);
 
-  const postLink = `${post.subreddit_name_prefixed}/comments/${post.id}`;
+  const subreddit = post.subreddit_name_prefixed.replace(/^r\//, '');
+
+  const postLink = `/r/${subreddit}/comments/${post.id}`;
 
   return (
     <div className={styles.itemRow}>

@@ -1,0 +1,87 @@
+/* PostPage.module.css */
+
+.container {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  color: #222;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.post {
+  padding: 1rem 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.post h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+
+.post p {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 1rem;
+}
+
+.text {
+  font-size: 1rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  white-space: pre-wrap;
+}
+
+.image {
+  max-width: 100%;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.video {
+  max-width: 100%;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+}
+
+.comments {
+  margin-top: 1rem;
+  padding-left: 0.5rem;
+  border-left: 3px solid #ccc;
+}
+
+.comment {
+  margin-bottom: 1rem;
+}
+
+.comment .author {
+  font-weight: bold;
+  font-size: 0.85rem;
+  margin-bottom: 0.25rem;
+  color: #0079d3; /* Reddit blue */
+}
+
+.comment .body {
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 0.5rem;
+}
+
+.comment .vote-box {
+  margin-top: 0.25rem;
+}
+
+/* Indentation for nested comments (you can use margin-left in JS, so minimal CSS here) */
+
+/* Loading and error messages */
+.loading,
+.error,
+.no-comments {
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  margin: 1rem 0;
+}

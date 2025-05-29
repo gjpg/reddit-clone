@@ -27,4 +27,5 @@ export interface RedditComment {
   archived?: boolean;
   num_comments?: number;
   title?: string;
+  parent_id?: string;
 }

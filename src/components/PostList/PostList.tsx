@@ -7,12 +7,13 @@ import type { RootState } from '../../store/store';
 import type { RedditPost } from '../../types';
 import styles from './PostList.module.css';
 import PostItem from '../PostItem/PostItem';
+import { voteOnItem } from '../../actions/voteActions';
 
 const validSorts = ['hot', 'new', 'top'] as const;
-type SortType = typeof validSorts[number];
+type SortType = (typeof validSorts)[number];
 
 const validTimespans = ['day', 'week', 'month', 'year', 'all'] as const;
-type TimespanType = typeof validTimespans[number];
+type TimespanType = (typeof validTimespans)[number];
 
 const PostList: React.FC = () => {
   const location = useLocation();
@@ -26,6 +27,14 @@ const PostList: React.FC = () => {
 
   let subreddit: string | undefined = undefined;
   let sort: SortType = 'hot'; // default sort
+
+  const handleVote = (id: string, type: 'post' | 'comment') => (dir: 1 | 0 | -1) => {
+    if (!token) {
+      alert('Please log in to vote.');
+      return;
+    }
+    dispatch(voteOnItem({ id, dir, type, token }));
+  };
 
   if (pathSegments.length === 0) {
     // front page, default hot
@@ -41,9 +50,7 @@ const PostList: React.FC = () => {
   // Parse timespan param 't' from query string, default to 'week'
   const searchParams = new URLSearchParams(location.search);
   const tParam = searchParams.get('t') ?? 'week';
-  const timespan: TimespanType = validTimespans.includes(tParam as TimespanType)
-    ? (tParam as TimespanType)
-    : 'week';
+  const timespan: TimespanType = validTimespans.includes(tParam as TimespanType) ? (tParam as TimespanType) : 'week';
 
   // If current sort is not 'top', timespan param shouldn't exist in URL. Remove it if present.
   useEffect(() => {
@@ -74,11 +81,7 @@ const PostList: React.FC = () => {
     <>
       <div className={styles.sortButtons}>
         {validSorts.map((s) => (
-          <Link
-            key={s}
-            to={buildSortLink(s)}
-            className={s === sort ? styles.activeSortButton : styles.sortButton}
-          >
+          <Link key={s} to={buildSortLink(s)} className={s === sort ? styles.activeSortButton : styles.sortButton}>
             {s.toUpperCase()}
           </Link>
         ))}
@@ -89,8 +92,9 @@ const PostList: React.FC = () => {
         {posts.map((post) => (
           <PostItem
             key={post.id}
-            post={{ ...post, kind: 'post', score: post.score ?? 'hidden' }}
+            post={post}
             token={token}
+            onVote={handleVote(post.id, 'post')}
             showThumbnail
             showAuthor
           />

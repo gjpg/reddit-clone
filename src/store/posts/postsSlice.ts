@@ -3,6 +3,7 @@ import type { PayloadAction } from '@reduxjs/toolkit';
 import type { RootState } from '../store';
 import type { Post } from '../../types/post';
 import type { RedditPost, RedditComment } from '../../types/reddit';
+import { voteOnItem } from '../../actions/voteActions';
 
 interface PostsState {
   posts: Post[];
@@ -12,6 +13,8 @@ interface PostsState {
   userActivityLoading: boolean;
   error: string | null;
   userActivityError: string | null;
+  selectedPost: Post | null;
+  comments: RedditComment[];
 }
 
 const initialState: PostsState = {
@@ -21,8 +24,95 @@ const initialState: PostsState = {
   loading: false,
   userActivityLoading: false,
   error: null,
-  userActivityError: null
+  userActivityError: null,
+  selectedPost: null,
+  comments: []
 };
+
+export const fetchPostDetails = createAsyncThunk<
+  { post: Post; comments: RedditComment[] },
+  { subreddit: string; postId: string },
+  { rejectValue: string }
+>('posts/fetchPostDetails', async ({ subreddit, postId }, thunkAPI) => {
+  try {
+    const token = localStorage.getItem('reddit_access_token');
+    if (!token) return thunkAPI.rejectWithValue('Missing access token');
+
+    const res = await fetch(`https://oauth.reddit.com/r/${subreddit}/comments/${postId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+
+    if (!res.ok) {
+      const error = await res.json();
+      return thunkAPI.rejectWithValue(error.message || 'Failed to fetch post');
+    }
+
+    const data = await res.json();
+    const postData = data[0]?.data?.children?.[0]?.data;
+    const commentsData = data[1]?.data?.children || [];
+
+    // Map post to your Post type
+    const post: Post = {
+      id: postData.id,
+      title: postData.title,
+      author: postData.author,
+      url: postData.url,
+      subreddit_name_prefixed: postData.subreddit_name_prefixed,
+      thumbnail: postData.thumbnail,
+      created_utc: postData.created_utc,
+      permalink: postData.permalink,
+      score: postData.score ?? 0,
+      likes: postData.likes ?? null,
+      archived: postData.archived ?? false,
+      selftext: postData.selftext,
+      kind: 'post',
+      is_video: postData.is_video ?? false,
+      media: postData.media,
+      comments: [] // optional
+    };
+
+    // Helper to recursively flatten nested Reddit comments and include parent_id
+   const flattenComments = (children: any[]): RedditComment[] => {
+  const flat: RedditComment[] = [];
+
+  for (const item of children) {
+    if (item.kind !== 't1') continue;
+    const c = item.data;
+
+    flat.push({
+      id: c.id,
+      author: c.author,
+      created_utc: c.created_utc,
+      permalink: c.permalink,
+      kind: 'comment',
+      body: c.body,
+      subreddit_name_prefixed: c.subreddit_name_prefixed,
+      score: c.score ?? 0,
+      likes: c.likes ?? null,
+      archived: c.archived ?? false,
+      parent_id: c.parent_id // included here
+    });
+
+    if (c.replies?.data?.children?.length > 0) {
+      flat.push(...flattenComments(c.replies.data.children));
+    }
+  }
+
+  return flat;
+};
+
+
+    const mappedComments = flattenComments(commentsData);
+
+    return { post, comments: mappedComments };
+  } catch {
+    return thunkAPI.rejectWithValue('Network error');
+  }
+});
+
+
 
 // Frontpage posts thunk
 export const fetchPosts = createAsyncThunk<Post[], string, { rejectValue: string }>(
@@ -159,6 +249,70 @@ const postsSlice = createSlice({
       .addCase(fetchUserActivity.rejected, (state, action) => {
         state.userActivityError = action.payload || 'Failed to fetch user activity';
         state.userActivityLoading = false;
+      })
+      .addCase(fetchPostDetails.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.selectedPost = null;
+        state.comments = [];
+      })
+    .addCase(fetchPostDetails.fulfilled, (state, action) => {
+  state.selectedPost = action.payload.post;
+
+  // ✅ Keep raw Reddit API format for rendering nested replies
+  state.comments = action.payload.comments;
+
+  state.loading = false;
+})
+
+      .addCase(fetchPostDetails.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || 'Failed to fetch post details';
+      })
+      .addCase(voteOnItem.fulfilled, (state, action) => {
+        const { id, dir, type } = action.payload;
+
+        const adjustScore = (item: { likes?: boolean | null; score: number | 'hidden' }, dir: number) => {
+          if (item.score === 'hidden') return;
+
+          if (item.likes === true && dir === 0) {
+            item.score -= 1;
+          } else if (item.likes === false && dir === 0) {
+            item.score += 1;
+          } else if (item.likes === true && dir === -1) {
+            item.score -= 2;
+          } else if (item.likes === false && dir === 1) {
+            item.score += 2;
+          } else if (item.likes == null) {
+            item.score += dir;
+          }
+
+          item.likes = dir === 1 ? true : dir === -1 ? false : null;
+        };
+
+        if (type === 'post') {
+          const post = state.posts.find((p) => p.id === id);
+          if (post) {
+            adjustScore(post, dir);
+          }
+
+          if (state.selectedPost?.id === id) {
+            adjustScore(state.selectedPost, dir);
+          }
+        } else if (type === 'comment') {
+          const comment = state.comments.find((c) => c.id === id);
+          if (comment) {
+            adjustScore(comment, dir);
+          }
+
+          for (const post of state.posts) {
+            const commentInPost = post.comments?.find((c) => c.id === id);
+            if (commentInPost) {
+              adjustScore(commentInPost, dir);
+              break;
+            }
+          }
+        }
       });
   }
 });
